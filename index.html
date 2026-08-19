@@ -42,13 +42,15 @@
   <script>
     (function () {
       var q = new URLSearchParams(location.search);
-      if ((q.get('dock') || '').split(',').indexOf('on') === -1) return;
+      // The grown rail IS the City home now, so this is on by default.
+      // `?dock=off` is an undocumented escape so pristine parity stays checkable.
+      if ((q.get('dock') || '').split(',').indexOf('off') !== -1) return;
       var NODE = 56, MARK = 38, OPEN_PILL = 44, PAD_Y = 17, GAP = 10;
       // Portfolio lifecycle: rail(locked) -> rail(unlocked) -> docked corner.
       // Default is DOCKED, because the fixture has category 1 complete and the
       // portfolio now unlocks after the FIRST category — so by the product
       // logic it has already flown to the corner.
-      var pf = (q.get('pf') || 'docked').toLowerCase();
+      var pf = (q.get('pf') || 'unlocked').toLowerCase();
       window.__NX_DOCK = {
         NODE: NODE, MARK: MARK, OPEN_PILL: OPEN_PILL,
         BAR_PAD: PAD_Y,            // UNIFORM. see the note above.
@@ -84,8 +86,16 @@
         // unlock are the same number in this data model, so this both moves it
         // and unlocks it — which is the intent.
         PF_AFTER: 1,
-        PF_DOCKED: pf === 'docked',
-        PF_LOCKED: pf === 'locked',
+        // Unlocked means DOCKED — the portfolio outgrows the rail, so there is
+        // no third "in the rail, unlocked" resting state to show.
+        PF_DOCKED: pf !== 'locked',
+
+        // The clock. At 4 the first category is 3-of-4 and the active scenario
+        // sits inside it, so the portfolio is locked by the real derivation and
+        // nothing past category 1 is active. (Shopify keeps a completed check:
+        // it is scenario 3, numbered before category 1's own 4 and 5. That
+        // interleaving is the fixture's, not something to paper over.)
+        DONE: pf === 'locked' ? 4 : 5,
 
         // Job Portal in WHITE. Green in this rail means active/achieved; a
         // second green for "special but still locked" reads as the same
@@ -125,7 +135,7 @@
     to recover an Electron renderer from ERR_NETWORK_CHANGED on a local server;
     on a static host it would fight normal loading.
   -->
-  <script src="/zero-nav-explorations/nav-explorations.js?v=1787179410"></script>
+  <script src="/zero-nav-explorations/nav-explorations.js?v=1787181776"></script>
 </body>
 
 </html>

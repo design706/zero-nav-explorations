@@ -274,6 +274,17 @@ const RULES = [
     // GREEN$1, and an unescaped `$1` would splice in capture group 1 instead.
     'color:$1.unlocked?GREEN$$1:$2?(__NXD.JP_ICON??"rgba(150,240,190,0.95)"):"rgba(255,255,255,0.55)"',
   ],
+  /* The fixture's clock. A locked portfolio cannot coexist with activity past
+     category 1 — the portfolio unlocks after category 1, so that state is
+     unreachable. `completedCount` is the single input every status derives
+     from (11 readers, one object), so winding it back is the honest fix. At 4,
+     category 1 is 3-of-4 and the active scenario is inside it, which makes the
+     portfolio locked BY DERIVATION rather than by an override. */
+  [
+    'completedCount',
+    /completedCount:5,categories:\[/,
+    'completedCount:(typeof window<"u"&&window.__NX_DOCK&&window.__NX_DOCK.DONE)||5,categories:[',
+  ],
 ];
 
 let out = src;

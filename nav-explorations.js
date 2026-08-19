@@ -28,7 +28,10 @@
   var q = new URLSearchParams(location.search);
   var dockFacets = (q.get('dock') || '').toLowerCase().split(',');
   var PF_STATE = (q.get('pf') || 'docked').toLowerCase();
-  var WANT_DOCK = dockFacets.indexOf('on') !== -1;
+  // The grown rail is not a variant any more — it is what the City home IS.
+  // `?dock=off` remains as an UNDOCUMENTED escape hatch so pristine parity
+  // stays checkable; it is deliberately not surfaced in the panel.
+  var WANT_DOCK = dockFacets.indexOf('off') === -1;
 
   var WANT_CARDS = (q.get('home') || '').toLowerCase() === 'cards';
   var ANY_VARIANT = WANT_DOCK || WANT_CARDS;
@@ -319,21 +322,28 @@
   }
 
   function buildDockedPortfolio() {
+    /* Mounted INSIDE the HUD canvas layer, as a sibling of the settings gear's
+       own wrapper — not fixed to the viewport like the debug button that used
+       to sit here. That matters twice over: it inherits the same 40/33 inset
+       the gear uses, and it inherits the canvas scale, so the two bottom
+       corners stay a matched pair at every window size. Mounting it to
+       document.body gave it a different inset AND a different scale, which is
+       exactly the imbalance in the screenshot. */
+    var gearWrap = document.querySelector(
+      '.pointer-events-auto.absolute.left-\\[40px\\].bottom-\\[33px\\], ' +
+        'div[class*="left-[40px]"][class*="bottom-[33px]"]'
+    );
     var host = styleEl(document.createElement('div'), {
-      position: 'fixed',
-      right: '24px',
-      bottom: '22px',
-      zIndex: '200',
+      position: 'absolute',
+      right: '40px', // === the gear's left-[40px]
+      bottom: '33px', // === the gear's bottom-[33px]
+      zIndex: '30',
       width: PILL + 'px',
       height: PILL + 'px',
       pointerEvents: 'auto',
     });
     host.id = 'nx-portfolio-dock';
 
-    // The ring lives OUTSIDE the button so the button keeps the gear's exact
-    // 58px footprint and the arc reads as a collar around it, not a border.
-    var R = 32,
-      C = 2 * Math.PI * R;
     var p = journeyProgress();
     var ring = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     ring.setAttribute('viewBox', '0 0 70 70');
@@ -346,15 +356,34 @@
       height: '70px',
       transform: 'rotate(-90deg)',
       pointerEvents: 'none',
+      overflow: 'visible',
     });
-    ring.innerHTML =
-      '<circle cx="35" cy="35" r="' + R + '" fill="none" ' +
-      'stroke="rgba(255,255,255,0.12)" stroke-width="3"/>' +
-      '<circle class="nx-ring-arc" cx="35" cy="35" r="' + R + '" fill="none" ' +
-      'stroke="rgb(73, 186, 97)" stroke-width="3" stroke-linecap="round" ' +
-      'stroke-dasharray="' + C.toFixed(2) + '" ' +
-      'stroke-dashoffset="' + C.toFixed(2) + '" ' +
-      'style="transition:stroke-dashoffset 600ms cubic-bezier(.32,.72,0,1)"/>';
+
+    /* DASHED, one segment per project — the point is to be COUNTABLE: you can
+       see how many slots are still empty. A continuous arc only says "some
+       fraction", which is the wrong read for a portfolio you are filling.
+
+       `pathLength="16"` re-bases the circle's length to the project count, so
+       a dasharray of "0.78 15.22" with offset -i renders exactly one dash at
+       index i. Colour per index; no arc maths, no rounding drift. */
+    var segs = [];
+    for (var i = 0; i < p.total; i++) {
+      var c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      c.setAttribute('cx', '35');
+      c.setAttribute('cy', '35');
+      c.setAttribute('r', '32');
+      c.setAttribute('fill', 'none');
+      c.setAttribute('stroke-width', '3');
+      c.setAttribute('stroke-linecap', 'round');
+      c.setAttribute('pathLength', String(p.total));
+      c.setAttribute('stroke-dasharray', 0.78 + ' ' + (p.total - 0.78));
+      c.setAttribute('stroke-dashoffset', String(-i));
+      c.setAttribute('stroke', 'rgba(255,255,255,0.16)');
+      c.style.transition = 'stroke 220ms ease';
+      c.className.baseVal = 'nx-seg';
+      ring.appendChild(c);
+      segs.push(c);
+    }
 
     var btn = styleEl(document.createElement('button'), {
       position: 'absolute',
@@ -364,7 +393,6 @@
       borderRadius: '999px',
       cursor: 'pointer',
       padding: '0',
-      // PILL_SURFACE, verbatim from the bundle
       backdropFilter: 'blur(10px)',
       WebkitBackdropFilter: 'blur(10px)',
       background: 'rgba(0,0,0,0.2)',
@@ -382,117 +410,208 @@
 
     host.appendChild(ring);
     host.appendChild(btn);
-    document.body.appendChild(host);
-    return { host: host, btn: btn, ring: ring, circumference: C, progress: p };
+    (gearWrap && gearWrap.parentElement ? gearWrap.parentElement : document.body).appendChild(host);
+    return { host: host, btn: btn, ring: ring, segs: segs, progress: p };
   }
 
-  /* Draw the arc to the current fraction. Split from the build so the unlock
-     flight can hold it at zero and then fill it as the arrival beat. */
-  function drawRing(dock, animate) {
-    var arc = dock.ring.querySelector('.nx-ring-arc');
-    if (!arc) return;
-    var frac = dock.progress.done / dock.progress.total;
-    var to = dock.circumference * (1 - frac);
-    if (!animate || REDUCE) arc.style.transition = 'none';
-    arc.style.strokeDashoffset = to.toFixed(2);
-    if (!animate || REDUCE) {
-      void arc.getBoundingClientRect();
-      arc.style.transition = 'stroke-dashoffset 600ms cubic-bezier(.32,.72,0,1)';
-    }
+  /* Light the done segments. Staggered on unlock so the ring reads as filling
+     rather than switching. */
+  function drawRing(dock, stagger) {
+    dock.segs.forEach(function (seg, i) {
+      var on = i < dock.progress.done;
+      var apply = function () {
+        seg.setAttribute('stroke', on ? 'rgb(73, 186, 97)' : 'rgba(255,255,255,0.16)');
+      };
+      if (on && stagger && !REDUCE) setTimeout(apply, i * 28);
+      else apply();
+    });
   }
 
   function initPortfolioDock() {
     var dock = buildDockedPortfolio();
-    requestAnimationFrame(function () { drawRing(dock, true); });
+    requestAnimationFrame(function () { drawRing(dock, false); });
     return dock;
   }
 
-  /* ── the unlock moment ───────────────────────────────────────────────────
-     Played live from the in-rail state, no reload: the chip acknowledges, a
-     clone flies to the corner, the rail closes the gap behind it, and the ring
-     fills on arrival. Reduced motion gets the same outcome as a crossfade. */
+  /* ── the unlock, choreographed ───────────────────────────────────────────
+     The first pass was a linear tween between two rects, which is why it read
+     as weak: no anticipation, a straight slide, and a dead stop. Five beats:
+
+       1. ANTICIPATE  the chip unlocks IN PLACE — green fills, a ring expands
+                      off it, the label collapses. The change is acknowledged
+                      before anything moves.
+       2. DETACH      the rail chip fades and a clone takes its exact rect; the
+                      rail starts closing the gap on its own 420ms curve, so
+                      the bar reflows UNDER the flight instead of after it.
+       3. ARC         a quadratic Bézier, control point lifted above the
+                      midpoint, sampled into keyframes — it lifts out of the
+                      bar and falls into the corner rather than sliding there.
+       4. SETTLE      overshoot and return. The bounce.
+       5. REVEAL      crossfade to the real dock; the segments light in
+                      sequence, so the ring reads as filling.
+
+     Reduced motion collapses 1–4 into a crossfade with the same outcome. */
+  var EASE_OUT = 'cubic-bezier(.22,.61,.36,1)';
+
+  function quadPath(from, to, lift) {
+    // control point above the midpoint — the higher the lift, the more the
+    // clone arcs up and over rather than tracking the straight line
+    var cx = (from.x + to.x) / 2;
+    var cy = Math.min(from.y, to.y) - lift;
+    var pts = [];
+    for (var i = 0; i <= 24; i++) {
+      var t = i / 24,
+        n = 1 - t;
+      pts.push({
+        x: n * n * from.x + 2 * n * t * cx + t * t * to.x,
+        y: n * n * from.y + 2 * n * t * cy + t * t * to.y,
+      });
+    }
+    return pts;
+  }
+
   function playUnlock() {
     var pillEl = document.querySelector('nav[aria-label$="timeline"] > div');
     if (!pillEl) return;
     var chip = Array.prototype.filter.call(pillEl.children, function (c) {
       return c.tagName === 'BUTTON' && /portfolio/i.test(c.getAttribute('aria-label') || '');
     })[0];
-    var existing = document.getElementById('nx-portfolio-dock');
-    if (existing) existing.remove();
+    var old = document.getElementById('nx-portfolio-dock');
+    if (old) old.remove();
 
     var dock = buildDockedPortfolio();
-    var target = dock.btn.getBoundingClientRect();
     dock.host.style.opacity = '0';
+    var target = dock.btn.getBoundingClientRect();
 
     if (!chip || REDUCE) {
-      dock.host.style.transition = 'opacity 400ms ease';
-      requestAnimationFrame(function () {
-        dock.host.style.opacity = '1';
-        drawRing(dock, true);
-      });
+      dock.host.style.opacity = '1';
+      drawRing(dock, false);
       return;
     }
 
     var from = chip.getBoundingClientRect();
-    var clone = styleEl(document.createElement('div'), {
+
+    // ── 1. anticipation: it unlocks where it stands ──────────────────────
+    chip.animate(
+      [
+        { backgroundColor: 'rgba(255,255,255,0.05)', transform: 'scale(1)' },
+        { backgroundColor: 'rgba(73,186,97,0.24)', transform: 'scale(1.14)', offset: 0.6 },
+        { backgroundColor: 'rgba(73,186,97,0.24)', transform: 'scale(1)' },
+      ],
+      { duration: 360, easing: EASE_OUT, fill: 'forwards' }
+    );
+    var halo = styleEl(document.createElement('div'), {
       position: 'fixed',
       left: from.left + 'px',
       top: from.top + 'px',
       width: from.width + 'px',
       height: from.height + 'px',
       borderRadius: '999px',
-      background: 'rgba(73,186,97,0.24)',
-      boxShadow: '0 0 0 2px rgb(73, 186, 97), 0 0 26px -6px rgb(73, 186, 97)',
-      zIndex: '300',
+      boxShadow: '0 0 0 2px rgb(73, 186, 97)',
+      zIndex: '299',
       pointerEvents: 'none',
-      display: 'grid',
-      placeItems: 'center',
-      transition:
-        'left 700ms cubic-bezier(.32,.72,0,1), top 700ms cubic-bezier(.32,.72,0,1), ' +
-        'width 700ms cubic-bezier(.32,.72,0,1), height 700ms cubic-bezier(.32,.72,0,1), ' +
-        'transform 260ms cubic-bezier(.32,.72,0,1), opacity 200ms ease 620ms',
     });
-    clone.innerHTML =
-      '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">' +
-      '<path fill-rule="evenodd" clip-rule="evenodd" fill="#fff" d="' + PF_ICON_PATH + '"/></svg>';
-    document.body.appendChild(clone);
+    document.body.appendChild(halo);
+    halo.animate([{ transform: 'scale(1)', opacity: 0.9 }, { transform: 'scale(2.1)', opacity: 0 }], {
+      duration: 620,
+      easing: EASE_OUT,
+    });
+    setTimeout(function () { halo.remove(); }, 700); // never rely on onfinish to clean up
 
-    // 1. acknowledge in place
-    clone.style.transform = 'scale(1.12)';
-    setTimeout(function () { clone.style.transform = 'scale(1)'; }, 220);
-
-    // 2. the rail closes the gap it leaves behind
+    // ── 2. detach + the rail closes behind it ────────────────────────────
     setTimeout(function () {
-      chip.style.transition = 'max-width 700ms cubic-bezier(.32,.72,0,1), ' +
-        'opacity 240ms ease, margin 700ms cubic-bezier(.32,.72,0,1)';
+      var clone = styleEl(document.createElement('div'), {
+        position: 'fixed',
+        left: '0px',
+        top: '0px',
+        width: from.width + 'px',
+        height: from.height + 'px',
+        marginLeft: -from.width / 2 + 'px',
+        marginTop: -from.height / 2 + 'px',
+        borderRadius: '999px',
+        background: 'rgba(73,186,97,0.24)',
+        boxShadow: '0 0 0 2px rgb(73, 186, 97), 0 0 26px -6px rgb(73, 186, 97)',
+        zIndex: '300',
+        pointerEvents: 'none',
+        display: 'grid',
+        placeItems: 'center',
+        willChange: 'transform',
+      });
+      clone.innerHTML =
+        '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">' +
+        '<path fill-rule="evenodd" clip-rule="evenodd" fill="#fff" d="' + PF_ICON_PATH + '"/></svg>';
+      document.body.appendChild(clone);
+
+      chip.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 160, fill: 'forwards' });
+      chip.style.transition =
+        'max-width 420ms cubic-bezier(.32,.72,0,1), margin 420ms cubic-bezier(.32,.72,0,1)';
       chip.style.maxWidth = '0px';
       chip.style.minWidth = '0px';
-      chip.style.opacity = '0';
-      chip.style.marginLeft = '-' + (window.__NX_DOCK.GAP || 10) + 'px';
+      chip.style.marginLeft = '-' + ((window.__NX_DOCK && window.__NX_DOCK.GAP) || 10) + 'px';
       var sep = chip.previousElementSibling;
       if (sep && sep.tagName === 'SPAN') {
-        sep.style.transition = 'width 700ms cubic-bezier(.32,.72,0,1), opacity 240ms ease';
+        sep.style.transition = 'width 420ms cubic-bezier(.32,.72,0,1), opacity 200ms ease';
         sep.style.width = '0px';
         sep.style.opacity = '0';
       }
-    }, 240);
 
-    // 3. fly
-    setTimeout(function () {
-      clone.style.left = target.left + 'px';
-      clone.style.top = target.top + 'px';
-      clone.style.width = target.width + 'px';
-      clone.style.height = target.height + 'px';
-      clone.style.opacity = '0';
-    }, 260);
+      // ── 3. the arc ─────────────────────────────────────────────────────
+      var A = { x: from.left + from.width / 2, y: from.top + from.height / 2 };
+      var B = { x: target.left + target.width / 2, y: target.top + target.height / 2 };
+      var lift = Math.max(90, Math.abs(B.x - A.x) * 0.22);
+      var scaleTo = target.width / from.width;
+      var frames = quadPath(A, B, lift).map(function (pt, i, arr) {
+        var t = i / (arr.length - 1);
+        return {
+          transform:
+            'translate(' + pt.x + 'px,' + pt.y + 'px) scale(' + (1 + (scaleTo - 1) * t) + ')',
+        };
+      });
+      var FLY = 740,
+        SETTLE = 300;
+      clone.animate(frames, { duration: FLY, easing: EASE_OUT, fill: 'forwards' });
 
-    // 4. arrive: the corner takes over and the ring fills
-    setTimeout(function () {
-      dock.host.style.transition = 'opacity 240ms ease';
-      dock.host.style.opacity = '1';
-      drawRing(dock, true);
-      clone.remove();
-    }, 940);
+      /* Beats 4 and 5 run on explicit offsets rather than chained `onfinish`.
+         Chaining looked cleaner but left the sequence one dropped event away
+         from stranding the clone on screen with the real dock still at zero
+         opacity — which is exactly what it did. Fixed offsets always land. */
+      var at = function (ms, fn) { setTimeout(fn, ms); };
+      var atCorner = 'translate(' + B.x + 'px,' + B.y + 'px) scale(';
+
+      // 4. settle — overshoot, undershoot, rest
+      at(FLY, function () {
+        clone.animate(
+          [
+            { transform: atCorner + scaleTo + ')' },
+            { transform: atCorner + scaleTo * 1.1 + ')', offset: 0.4 },
+            { transform: atCorner + scaleTo * 0.97 + ')', offset: 0.72 },
+            { transform: atCorner + scaleTo + ')' },
+          ],
+          { duration: SETTLE, easing: 'cubic-bezier(.34,1.56,.64,1)', fill: 'forwards' }
+        );
+      });
+
+      // 5. reveal — the real dock takes over, then the ring fills segment by
+      //    segment so the portfolio reads as countable, not as a percentage
+      at(FLY + SETTLE, function () {
+        /* The RESTING state is written synchronously and the fade is purely
+           additive (no `fill: 'forwards'`). A transition or a filled animation
+           would leave the dock invisible for good if the compositor never
+           advanced it — which is exactly what a throttled/backgrounded tab
+           does. Correct at rest first; the fade is a bonus. */
+        dock.host.style.transition = 'none';
+        dock.host.style.opacity = '1';
+        // Deliberately NOT animated. An animation — even an unfilled one —
+        // overrides inline style for its whole active phase, so if the
+        // compositor never advances it (throttled tab, background window) the
+        // dock stays pinned to its first keyframe and is invisible for good.
+        // The crossfade is carried by the clone fading out over it instead.
+        clone.style.opacity = '0';
+        clone.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 200, easing: 'ease' });
+        at(220, function () { clone.remove(); });
+        drawRing(dock, true);
+      });
+    }, 300);
   }
 
   /* ── ?home=cards — plain base, the chips laid out as cards ──────────────
@@ -773,74 +892,32 @@
       }, 'Plain base, scales to any focus')
     );
 
-    body.appendChild(section('Navigation'));
-    body.appendChild(
-      chip('Dock grown', WANT_DOCK, function () {
-        go({ dock: WANT_DOCK ? null : 'on' });
-      }, WANT_DOCK ? 'On — click to restore' : 'Taller bar, dock presence')
-    );
-
     body.appendChild(section('Portfolio'));
     body.appendChild(
-      chip('In the rail · locked', PF_STATE === 'locked', function () {
-        go({ dock: 'on', pf: 'locked' });
-      }, 'Before the first category lands')
+      chip('Locked', PF_STATE === 'locked', function () {
+        go({ pf: 'locked' });
+      }, 'One project from opening')
     );
     body.appendChild(
-      chip('In the rail · unlocked', PF_STATE === 'rail', function () {
-        go({ dock: 'on', pf: 'rail' });
-      }, 'The moment it opens')
-    );
-    body.appendChild(
-      chip('Docked · corner', PF_STATE === 'docked', function () {
-        go({ dock: 'on', pf: 'docked' });
-      }, 'Where it lives, ring filling')
+      chip('Unlocked', PF_STATE !== 'locked', function () {
+        go({ pf: null });
+      }, 'Docked, ring filling')
     );
     var play = chip('▶  Play unlock', false, function () {
-      if (PF_STATE !== 'rail') {
-        // needs the chip on screen to fly FROM, so land there first and
-        // autoplay on arrival
+      if (PF_STATE !== 'locked') {
+        // needs the locked chip on screen to fly FROM
         sessionStorage.setItem('nx-autoplay-unlock', '1');
-        go({ dock: 'on', pf: 'rail' });
+        go({ pf: 'locked' });
         return;
       }
       playUnlock();
-    }, 'Rail → corner, with the ring');
+    }, 'Unlocks, flies, lands');
     play.style.marginTop = '2px';
     body.appendChild(play);
 
-    /* The prototype's screen switcher, relocated. Its own button is hidden, so
-       drive it: open the menu, then click the row by its text on the next
-       frame. `.click()` works on a display:none button. */
-    function tourAction(label) {
-      var trigger = document.querySelector('button[aria-label="Prototype tour"]');
-      if (!trigger) return;
-      trigger.click();
-      requestAnimationFrame(function () {
-        var rows = document.querySelectorAll('[role="menu"] button, [role="menuitem"]');
-        for (var i = 0; i < rows.length; i++) {
-          if ((rows[i].textContent || '').trim().toLowerCase() === label.toLowerCase()) {
-            rows[i].click();
-            return;
-          }
-        }
-        trigger.click(); // nothing matched — close it again
-      });
-    }
-    body.appendChild(section('Screens'));
-    body.appendChild(chip('Home', false, function () { tourAction('Home'); }));
-    body.appendChild(chip('Stage screen', false, function () { tourAction('Stage screen'); }));
-
-    var reset = chip('Reset to base', !ANY_VARIANT, function () {
-      go({ dock: null, pf: null, home: null });
-    });
-    reset.style.marginTop = '4px';
-    reset.style.opacity = '0.75';
-    body.appendChild(reset);
-
     // The collapsed handle. Names the live variant count so a screenshot of a
     // variant is never mistaken for the base.
-    var count = (WANT_CARDS ? 1 : 0) + (WANT_DOCK ? 1 : 0);
+    var count = WANT_CARDS ? 1 : 0;
     var toggle = styleEl(document.createElement('button'), {
       cursor: 'pointer',
       border: '1px solid rgba(255,255,255,0.14)',
@@ -857,9 +934,9 @@
     for (var g2 in GLASS) toggle.style[g2] = GLASS[g2];
     toggle.innerHTML =
       '<span style="width:6px;height:6px;border-radius:999px;background:' +
-      (count ? '#4ade80' : 'rgba(255,255,255,0.35)') +
+      (PF_STATE === 'locked' ? 'rgba(255,255,255,0.35)' : '#4ade80') +
       '"></span><span>' +
-      (count ? 'Variants · ' + count : 'Variants') +
+      (WANT_CARDS ? 'Cards' : 'City') +
       '</span>';
     toggle.addEventListener('click', function () {
       open = !open;
@@ -894,10 +971,10 @@
       if (WANT_DOCK) initDock();
       // The corner portfolio only exists in the dock variant, and only once it
       // has left the rail.
-      if (WANT_DOCK && PF_STATE === 'docked') initPortfolioDock();
+      if (WANT_DOCK && PF_STATE !== 'locked') initPortfolioDock();
       // "Play unlock" pressed from a state without the chip on screen: it
       // routed here first, so play on arrival.
-      if (WANT_DOCK && PF_STATE === 'rail' && sessionStorage.getItem('nx-autoplay-unlock')) {
+      if (WANT_DOCK && PF_STATE === 'locked' && sessionStorage.getItem('nx-autoplay-unlock')) {
         sessionStorage.removeItem('nx-autoplay-unlock');
         setTimeout(playUnlock, 600);
       }
