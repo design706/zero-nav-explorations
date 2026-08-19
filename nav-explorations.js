@@ -27,12 +27,11 @@
 
   var q = new URLSearchParams(location.search);
   var dockFacets = (q.get('dock') || '').toLowerCase().split(',');
-  var pfFacets = (q.get('portfolio') || '').toLowerCase().split(',');
+  var PF_STATE = (q.get('pf') || 'docked').toLowerCase();
   var WANT_DOCK = dockFacets.indexOf('on') !== -1;
-  var WANT_PF = pfFacets.indexOf('on') !== -1 || pfFacets.indexOf('top') !== -1;
-  var PF_TOP = pfFacets.indexOf('top') !== -1;
+
   var WANT_CARDS = (q.get('home') || '').toLowerCase() === 'cards';
-  var ANY_VARIANT = WANT_DOCK || WANT_PF || WANT_CARDS;
+  var ANY_VARIANT = WANT_DOCK || WANT_CARDS;
 
   /* The deployed base also carries the first-run injection (firstrun.js —
      welcome → journey → morph into the dock). It lands a milestone on the very
@@ -150,12 +149,22 @@
     var style = document.createElement('style');
     style.id = 'nx-focus';
     style.textContent =
+      // The prototype's own debug button (a compass, fixed bottom-right) is
+      // hidden: that corner belongs to the portfolio now, and a debug control
+      // belongs in the debug panel. The WRAPPER stays mounted so its menu can
+      // still be driven programmatically from the Variants panel.
+      'button[aria-label="Prototype tour"]{display:none!important;}' +
       // connectors tighten while focused
       // The title box: never shrink (it is a flex item, and shrinking is what
       // makes it re-wrap while the button reveals), and take the per-title
       // width measured by fitTitles(), falling back to the cap.
       'nav[aria-label$="timeline"] > div > div > button[aria-expanded] > span' +
       '{flex-shrink:0!important;width:var(--nx-title-w,168px)!important;}' +
+      // The prototype's own debug button (a compass, fixed bottom-right) is
+      // hidden: that corner belongs to the portfolio now, and a debug control
+      // belongs in the debug panel. The WRAPPER stays mounted so its menu can
+      // still be driven programmatically from the Variants panel.
+      'button[aria-label="Prototype tour"]{display:none!important;}' +
       // connectors tighten while focused
       'nav[data-nx-focus="1"] > div > span{width:var(--nx-conn-focus,12px)!important;}' +
       // and so do the segments that are NOT the open one. `:has()` is how CSS
@@ -275,72 +284,215 @@
     installFocusCss();
   }
 
-  /* ── ?portfolio=on — extract the milestone into its own element ─────────
-     The portfolio grows with every scenario forever; the journey rail is
-     finite. So it comes OUT of the rail: the real button is hidden (never
-     removed) and the corner element forwards clicks to it, so the app's own
-     behaviour is untouched. */
-  function initPortfolio(nav, rail) {
-    var pfButton = null;
-    rail.milestones.forEach(function (b) {
-      if (/^portfolio/i.test(b.innerText || '')) pfButton = b;
+  /* ── the portfolio, docked in the corner ─────────────────────────────────
+     The portfolio is not a stop on the journey — the journey is finite and the
+     portfolio keeps growing after it. So once it unlocks it leaves the rail and
+     takes the bottom-right corner: always present, filling as work lands.
+
+     It occupies the slot the prototype's own debug button was using (a compass
+     at fixed bottom-[22px] right-[24px]); that button is hidden and its screen
+     switcher moves into the Variants panel, which is where debug belongs.
+
+     Chrome is the SettingsPill recipe verbatim — same PILL_SURFACE colours,
+     same 58px, same opacity .55 rising to 1 on hover — so the two bottom
+     corners read as one pair of controls rather than two unrelated buttons. */
+  var PILL = 58;
+  var PF_ICON_PATH =
+    'M15.5406 18.3526L8.46061 18.3626H8.45961C8.35061 18.3626 8.24661 18.3196 8.16961 18.2426C8.09261 18.1656 8.04861 18.0606 8.04861 17.9516C8.04861 16.4556 9.27061 14.9456 12.0006 14.9456C14.7296 14.9456 15.9516 16.4506 15.9516 17.9416C15.9516 18.1686 15.7676 18.3526 15.5406 18.3526ZM11.9996 8.54766C13.4136 8.54766 14.5636 9.69766 14.5636 11.1116C14.5636 12.5256 13.4136 13.6756 11.9996 13.6756C10.5866 13.6756 9.43661 12.5256 9.43661 11.1116C9.43661 9.69766 10.5866 8.54766 11.9996 8.54766ZM10.9296 4.11466C10.9296 3.94866 11.0636 3.81466 11.2296 3.81466H12.7706C12.9366 3.81466 13.0706 3.94866 13.0706 4.11466V5.87566C13.0706 6.04066 12.9366 6.17566 12.7706 6.17566H11.2296C11.0636 6.17566 10.9296 6.04066 10.9296 5.87566V4.11466ZM15.6996 4.34766H14.4996V4.04766C14.4996 3.14766 13.7996 2.34766 12.8996 2.34766H11.1996C10.2996 2.34766 9.49961 3.04766 9.49961 4.04766V4.34766H8.29961C5.39961 4.34766 3.59961 6.04766 3.59961 8.94766V16.9476C3.59961 19.8476 5.39961 21.6476 8.29961 21.6476H15.6996C18.5996 21.6476 20.3996 19.9476 20.3996 17.0476V8.94766C20.2996 6.04766 18.5996 4.34766 15.6996 4.34766Z';
+
+  /* Progress is read from the rail's OWN aria-labels ("N of M complete") so
+     the ring can never disagree with the bar it came out of. */
+  function journeyProgress() {
+    var heads = document.querySelectorAll(
+      'nav[aria-label$="timeline"] button[aria-expanded][aria-label]'
+    );
+    var done = 0,
+      total = 0;
+    Array.prototype.forEach.call(heads, function (h) {
+      var m = /(\d+)\s+of\s+(\d+)\s+complete/.exec(h.getAttribute('aria-label') || '');
+      if (m) {
+        done += +m[1];
+        total += +m[2];
+      }
     });
-    if (!pfButton) return;
+    return total ? { done: done, total: total } : { done: 5, total: 16 };
+  }
 
-    // Hide the in-rail button and its leading separator dot.
-    var sep = pfButton.previousElementSibling;
-    if (sep && sep.tagName === 'SPAN') sep.style.display = 'none';
-    pfButton.style.display = 'none';
-
-    var done = rail.segments.reduce(function (n, s) {
-      return n + s.done;
-    }, 0);
-    var status = (pfButton.innerText || '').split('·')[1];
-
-    var card = styleEl(document.createElement('button'), {
-      position: 'absolute',
-      left: '40px',
-      cursor: 'pointer',
+  function buildDockedPortfolio() {
+    var host = styleEl(document.createElement('div'), {
+      position: 'fixed',
+      right: '24px',
+      bottom: '22px',
+      zIndex: '200',
+      width: PILL + 'px',
+      height: PILL + 'px',
       pointerEvents: 'auto',
-      border: '0',
-      textAlign: 'left',
-      padding: '18px 22px',
-      borderRadius: '24px',
-      zIndex: '6',
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '8px',
-      width: '250px',
-      transition: REDUCE ? 'none' : 'transform 200ms ' + EASE,
     });
-    card.style[PF_TOP ? 'top' : 'bottom'] = PF_TOP ? '120px' : '110px';
-    for (var g in GLASS) card.style[g] = GLASS[g];
+    host.id = 'nx-portfolio-dock';
 
-    card.innerHTML =
-      '<span class="font-pp-supply-mono" style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.55)">Portfolio</span>' +
-      '<span style="display:flex;align-items:baseline;gap:9px">' +
-      '<span class="font-stk-bureau-serif" style="font-size:38px;line-height:1;color:#fff">' +
-      String(done).padStart(2, '0') +
-      '</span>' +
-      '<span class="font-google-sans-flex" style="font-size:13.5px;font-weight:500;color:rgba(255,255,255,0.7)">artifacts banked</span>' +
-      '</span>' +
-      (status
-        ? '<span class="font-google-sans-flex" style="font-size:12px;color:rgba(255,255,255,0.5)">Unlocks in' +
-          status.replace(/more to go/i, 'scenarios') +
-          '</span>'
-        : '');
+    // The ring lives OUTSIDE the button so the button keeps the gear's exact
+    // 58px footprint and the arc reads as a collar around it, not a border.
+    var R = 32,
+      C = 2 * Math.PI * R;
+    var p = journeyProgress();
+    var ring = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    ring.setAttribute('viewBox', '0 0 70 70');
+    ring.setAttribute('aria-hidden', 'true');
+    styleEl(ring, {
+      position: 'absolute',
+      left: '-6px',
+      top: '-6px',
+      width: '70px',
+      height: '70px',
+      transform: 'rotate(-90deg)',
+      pointerEvents: 'none',
+    });
+    ring.innerHTML =
+      '<circle cx="35" cy="35" r="' + R + '" fill="none" ' +
+      'stroke="rgba(255,255,255,0.12)" stroke-width="3"/>' +
+      '<circle class="nx-ring-arc" cx="35" cy="35" r="' + R + '" fill="none" ' +
+      'stroke="rgb(73, 186, 97)" stroke-width="3" stroke-linecap="round" ' +
+      'stroke-dasharray="' + C.toFixed(2) + '" ' +
+      'stroke-dashoffset="' + C.toFixed(2) + '" ' +
+      'style="transition:stroke-dashoffset 600ms cubic-bezier(.32,.72,0,1)"/>';
 
-    card.addEventListener('click', function () {
-      pfButton.click();
+    var btn = styleEl(document.createElement('button'), {
+      position: 'absolute',
+      inset: '0',
+      display: 'grid',
+      placeItems: 'center',
+      borderRadius: '999px',
+      cursor: 'pointer',
+      padding: '0',
+      // PILL_SURFACE, verbatim from the bundle
+      backdropFilter: 'blur(10px)',
+      WebkitBackdropFilter: 'blur(10px)',
+      background: 'rgba(0,0,0,0.2)',
+      border: '2px solid rgba(255,255,255,0.1)',
+      opacity: '0.55', // === SettingsPill
+      transition: 'opacity 200ms ease',
     });
-    card.addEventListener('mouseenter', function () {
-      if (!REDUCE) card.style.transform = 'translateY(-2px)';
-    });
-    card.addEventListener('mouseleave', function () {
-      card.style.transform = 'none';
-    });
+    btn.type = 'button';
+    btn.setAttribute('aria-label', 'Portfolio · ' + p.done + ' of ' + p.total + ' projects');
+    btn.innerHTML =
+      '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">' +
+      '<path fill-rule="evenodd" clip-rule="evenodd" fill="#fff" d="' + PF_ICON_PATH + '"/></svg>';
+    btn.addEventListener('mouseenter', function () { btn.style.opacity = '1'; });
+    btn.addEventListener('mouseleave', function () { btn.style.opacity = '0.55'; });
 
-    nav.parentElement.appendChild(card);
+    host.appendChild(ring);
+    host.appendChild(btn);
+    document.body.appendChild(host);
+    return { host: host, btn: btn, ring: ring, circumference: C, progress: p };
+  }
+
+  /* Draw the arc to the current fraction. Split from the build so the unlock
+     flight can hold it at zero and then fill it as the arrival beat. */
+  function drawRing(dock, animate) {
+    var arc = dock.ring.querySelector('.nx-ring-arc');
+    if (!arc) return;
+    var frac = dock.progress.done / dock.progress.total;
+    var to = dock.circumference * (1 - frac);
+    if (!animate || REDUCE) arc.style.transition = 'none';
+    arc.style.strokeDashoffset = to.toFixed(2);
+    if (!animate || REDUCE) {
+      void arc.getBoundingClientRect();
+      arc.style.transition = 'stroke-dashoffset 600ms cubic-bezier(.32,.72,0,1)';
+    }
+  }
+
+  function initPortfolioDock() {
+    var dock = buildDockedPortfolio();
+    requestAnimationFrame(function () { drawRing(dock, true); });
+    return dock;
+  }
+
+  /* ── the unlock moment ───────────────────────────────────────────────────
+     Played live from the in-rail state, no reload: the chip acknowledges, a
+     clone flies to the corner, the rail closes the gap behind it, and the ring
+     fills on arrival. Reduced motion gets the same outcome as a crossfade. */
+  function playUnlock() {
+    var pillEl = document.querySelector('nav[aria-label$="timeline"] > div');
+    if (!pillEl) return;
+    var chip = Array.prototype.filter.call(pillEl.children, function (c) {
+      return c.tagName === 'BUTTON' && /portfolio/i.test(c.getAttribute('aria-label') || '');
+    })[0];
+    var existing = document.getElementById('nx-portfolio-dock');
+    if (existing) existing.remove();
+
+    var dock = buildDockedPortfolio();
+    var target = dock.btn.getBoundingClientRect();
+    dock.host.style.opacity = '0';
+
+    if (!chip || REDUCE) {
+      dock.host.style.transition = 'opacity 400ms ease';
+      requestAnimationFrame(function () {
+        dock.host.style.opacity = '1';
+        drawRing(dock, true);
+      });
+      return;
+    }
+
+    var from = chip.getBoundingClientRect();
+    var clone = styleEl(document.createElement('div'), {
+      position: 'fixed',
+      left: from.left + 'px',
+      top: from.top + 'px',
+      width: from.width + 'px',
+      height: from.height + 'px',
+      borderRadius: '999px',
+      background: 'rgba(73,186,97,0.24)',
+      boxShadow: '0 0 0 2px rgb(73, 186, 97), 0 0 26px -6px rgb(73, 186, 97)',
+      zIndex: '300',
+      pointerEvents: 'none',
+      display: 'grid',
+      placeItems: 'center',
+      transition:
+        'left 700ms cubic-bezier(.32,.72,0,1), top 700ms cubic-bezier(.32,.72,0,1), ' +
+        'width 700ms cubic-bezier(.32,.72,0,1), height 700ms cubic-bezier(.32,.72,0,1), ' +
+        'transform 260ms cubic-bezier(.32,.72,0,1), opacity 200ms ease 620ms',
+    });
+    clone.innerHTML =
+      '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">' +
+      '<path fill-rule="evenodd" clip-rule="evenodd" fill="#fff" d="' + PF_ICON_PATH + '"/></svg>';
+    document.body.appendChild(clone);
+
+    // 1. acknowledge in place
+    clone.style.transform = 'scale(1.12)';
+    setTimeout(function () { clone.style.transform = 'scale(1)'; }, 220);
+
+    // 2. the rail closes the gap it leaves behind
+    setTimeout(function () {
+      chip.style.transition = 'max-width 700ms cubic-bezier(.32,.72,0,1), ' +
+        'opacity 240ms ease, margin 700ms cubic-bezier(.32,.72,0,1)';
+      chip.style.maxWidth = '0px';
+      chip.style.minWidth = '0px';
+      chip.style.opacity = '0';
+      chip.style.marginLeft = '-' + (window.__NX_DOCK.GAP || 10) + 'px';
+      var sep = chip.previousElementSibling;
+      if (sep && sep.tagName === 'SPAN') {
+        sep.style.transition = 'width 700ms cubic-bezier(.32,.72,0,1), opacity 240ms ease';
+        sep.style.width = '0px';
+        sep.style.opacity = '0';
+      }
+    }, 240);
+
+    // 3. fly
+    setTimeout(function () {
+      clone.style.left = target.left + 'px';
+      clone.style.top = target.top + 'px';
+      clone.style.width = target.width + 'px';
+      clone.style.height = target.height + 'px';
+      clone.style.opacity = '0';
+    }, 260);
+
+    // 4. arrive: the corner takes over and the ring fills
+    setTimeout(function () {
+      dock.host.style.transition = 'opacity 240ms ease';
+      dock.host.style.opacity = '1';
+      drawRing(dock, true);
+      clone.remove();
+    }, 940);
   }
 
   /* ── ?home=cards — plain base, the chips laid out as cards ──────────────
@@ -630,23 +782,57 @@
 
     body.appendChild(section('Portfolio'));
     body.appendChild(
-      chip('In the rail', !WANT_PF, function () {
-        go({ portfolio: null });
-      }, 'As it is today')
+      chip('In the rail · locked', PF_STATE === 'locked', function () {
+        go({ dock: 'on', pf: 'locked' });
+      }, 'Before the first category lands')
     );
     body.appendChild(
-      chip('Own element · bottom left', WANT_PF && !PF_TOP, function () {
-        go({ portfolio: 'on' });
-      })
+      chip('In the rail · unlocked', PF_STATE === 'rail', function () {
+        go({ dock: 'on', pf: 'rail' });
+      }, 'The moment it opens')
     );
     body.appendChild(
-      chip('Own element · top left', PF_TOP, function () {
-        go({ portfolio: 'top' });
-      })
+      chip('Docked · corner', PF_STATE === 'docked', function () {
+        go({ dock: 'on', pf: 'docked' });
+      }, 'Where it lives, ring filling')
     );
+    var play = chip('▶  Play unlock', false, function () {
+      if (PF_STATE !== 'rail') {
+        // needs the chip on screen to fly FROM, so land there first and
+        // autoplay on arrival
+        sessionStorage.setItem('nx-autoplay-unlock', '1');
+        go({ dock: 'on', pf: 'rail' });
+        return;
+      }
+      playUnlock();
+    }, 'Rail → corner, with the ring');
+    play.style.marginTop = '2px';
+    body.appendChild(play);
+
+    /* The prototype's screen switcher, relocated. Its own button is hidden, so
+       drive it: open the menu, then click the row by its text on the next
+       frame. `.click()` works on a display:none button. */
+    function tourAction(label) {
+      var trigger = document.querySelector('button[aria-label="Prototype tour"]');
+      if (!trigger) return;
+      trigger.click();
+      requestAnimationFrame(function () {
+        var rows = document.querySelectorAll('[role="menu"] button, [role="menuitem"]');
+        for (var i = 0; i < rows.length; i++) {
+          if ((rows[i].textContent || '').trim().toLowerCase() === label.toLowerCase()) {
+            rows[i].click();
+            return;
+          }
+        }
+        trigger.click(); // nothing matched — close it again
+      });
+    }
+    body.appendChild(section('Screens'));
+    body.appendChild(chip('Home', false, function () { tourAction('Home'); }));
+    body.appendChild(chip('Stage screen', false, function () { tourAction('Stage screen'); }));
 
     var reset = chip('Reset to base', !ANY_VARIANT, function () {
-      go({ dock: null, portfolio: null, home: null });
+      go({ dock: null, pf: null, home: null });
     });
     reset.style.marginTop = '4px';
     reset.style.opacity = '0.75';
@@ -654,7 +840,7 @@
 
     // The collapsed handle. Names the live variant count so a screenshot of a
     // variant is never mistaken for the base.
-    var count = (WANT_CARDS ? 1 : 0) + (WANT_DOCK ? 1 : 0) + (WANT_PF ? 1 : 0);
+    var count = (WANT_CARDS ? 1 : 0) + (WANT_DOCK ? 1 : 0);
     var toggle = styleEl(document.createElement('button'), {
       cursor: 'pointer',
       border: '1px solid rgba(255,255,255,0.14)',
@@ -705,8 +891,16 @@
     try {
       var rail = readRail(nav);
       if (WANT_CARDS) initCardsHome(nav, rail);
-      if (WANT_PF) initPortfolio(nav, rail);
       if (WANT_DOCK) initDock();
+      // The corner portfolio only exists in the dock variant, and only once it
+      // has left the rail.
+      if (WANT_DOCK && PF_STATE === 'docked') initPortfolioDock();
+      // "Play unlock" pressed from a state without the chip on screen: it
+      // routed here first, so play on arrival.
+      if (WANT_DOCK && PF_STATE === 'rail' && sessionStorage.getItem('nx-autoplay-unlock')) {
+        sessionStorage.removeItem('nx-autoplay-unlock');
+        setTimeout(playUnlock, 600);
+      }
     } catch (err) {
       // An injection must never take the base down with it.
       console.warn('[nav-explorations] failed:', err);

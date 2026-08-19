@@ -212,6 +212,68 @@ const RULES = [
     'fontSize:__NXD.LABEL_FS??void 0,maxWidth:$1?(__NXD.MS_LBL_MAX??240):0,opacity:$1?1:0,' +
       'marginLeft:$1?(__NXD.MS_ML??8):0,',
   ],
+  /* ── the portfolio lifecycle ─────────────────────────────────────────────
+     `JOURNEY_MILESTONES` and `buildJourneyTrack` sit OUTSIDE the rail region,
+     so they cannot see the rail's `__NXD` binding — these rules read
+     `window.__NX_DOCK` directly, guarded, and fall back to the shipped literal.
+
+     Position is data, not layout: a milestone is pushed after the category
+     whose 1-based index equals its `afterCategories`, and `unlocked` is derived
+     from the same number. Moving Portfolio to 1 therefore ALSO unlocks it on
+     this fixture (category 1 is complete) — which is the product logic asked
+     for, not a side effect. */
+  [
+    'pfAfter',
+    /code:"portfolio",label:"Portfolio",afterCategories:3/,
+    'code:"portfolio",label:"Portfolio",' +
+      'afterCategories:(typeof window<"u"&&window.__NX_DOCK&&window.__NX_DOCK.PF_AFTER)||3',
+  ],
+
+  /* Docked state: drop the Portfolio node from the rail entirely (its
+     connector goes with it, because connectors are emitted per node). */
+  [
+    'pfDock',
+    new RegExp(
+      `const ${ID}=${ID}\\+1;for\\(const ${ID} of JOURNEY_MILESTONES\\)\\3\\.afterCategories===\\1&&${ID}\\.push\\(\\{kind:"milestone",id:\`milestone-\\$\\{\\3\\.code\\}\`,milestone:\\3,unlocked:${ID}>=\\3\\.afterCategories,remaining:Math\\.max\\(0,\\3\\.afterCategories-\\5\\)\\}\\)`
+    ),
+    'const $1=$2+1;const __nxd=(typeof window<"u"&&window.__NX_DOCK)||{};' +
+      'for(const $3 of JOURNEY_MILESTONES)$3.afterCategories===$1&&' +
+      '!(__nxd.PF_DOCKED&&$3.code==="portfolio")&&' +
+      '$4.push({kind:"milestone",id:`milestone-${$3.code}`,milestone:$3,' +
+      'unlocked:__nxd.PF_LOCKED&&$3.code==="portfolio"?!1:$5>=$3.afterCategories,' +
+      'remaining:__nxd.PF_LOCKED&&$3.code==="portfolio"?1:Math.max(0,$3.afterCategories-$5)})',
+  ],
+
+  /* ── job portal: green -> white ──────────────────────────────────────────
+     Green in this rail means ACTIVE/achieved. The job-portal chip used a
+     second green to mean "special but locked", which reads as the same
+     signal. Each of its seven colour sites becomes a token so the knob can
+     restate it in white without touching the unlocked-green semantics. */
+  [
+    'jpBg',
+    /background:([A-Za-z_$][\w$]*)\.unlocked\?"rgba\(73,186,97,0\.24\)":([A-Za-z_$][\w$]*)\?"rgba\(72,202,122,0\.13\)":"rgba\(255,255,255,0\.05\)"/,
+    'background:$1.unlocked?(__NXD.JP_UNLOCKED_BG??"rgba(73,186,97,0.24)")' +
+      ':$2?(__NXD.JP_BG??"rgba(72,202,122,0.13)"):"rgba(255,255,255,0.05)"',
+  ],
+  [
+    'jpRing',
+    /boxShadow:([A-Za-z_$][\w$]*)\?"inset 0 0 16px -2px rgba\(72,202,122,0\.62\), inset 0 0 0 1px rgba\(72,202,122,0\.42\)":IDLE_RING/,
+    'boxShadow:$1?`inset 0 0 16px -2px ${__NXD.JP_GLOW??"rgba(72,202,122,0.62)"}, ' +
+      'inset 0 0 0 1px ${__NXD.JP_HAIR??"rgba(72,202,122,0.42)"}`:IDLE_RING',
+  ],
+  [
+    'jpPulse',
+    /boxShadow:"inset 0 0 20px 1px rgba\(72,202,122,0\.55\), 0 0 16px -4px rgba\(72,202,122,0\.9\)"/,
+    'boxShadow:`inset 0 0 20px 1px ${__NXD.JP_PULSE??"rgba(72,202,122,0.55)"}, ' +
+      '0 0 16px -4px ${__NXD.JP_BLOOM??"rgba(72,202,122,0.9)"}`',
+  ],
+  [
+    'jpIcon',
+    /color:([A-Za-z_$][\w$]*)\.unlocked\?GREEN\$1:([A-Za-z_$][\w$]*)\?"rgba\(150,240,190,0\.95\)":"rgba\(255,255,255,0\.55\)"/,
+    // NB: `$$1` emits a literal `$1` — the bundle's palette constant is named
+    // GREEN$1, and an unescaped `$1` would splice in capture group 1 instead.
+    'color:$1.unlocked?GREEN$$1:$2?(__NXD.JP_ICON??"rgba(150,240,190,0.95)"):"rgba(255,255,255,0.55)"',
+  ],
 ];
 
 let out = src;
