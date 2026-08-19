@@ -111,10 +111,19 @@ const RULES = [
       `height:OPEN_PILL,maxWidth:${ID}\\?240:0,opacity:\\1\\?1:0,paddingLeft:\\1\\?10:0,paddingRight:\\1\\?8:0,`
     ),
     'height:OPEN_PILL,fontSize:__NXD.TITLE_FS??void 0,whiteSpace:__NXD.TITLE_WS??void 0,' +
+      'marginRight:$1?(__NXD.TITLE_MR_O??void 0):(__NXD.TITLE_MR_C??void 0),' +
       'lineHeight:__NXD.TITLE_LH??void 0,display:__NXD.TITLE_DISPLAY??void 0,' +
       'alignContent:__NXD.TITLE_ALIGN??void 0,alignItems:__NXD.TITLE_AI??void 0,' +
       'maxWidth:$1?(__NXD.TITLE_MAX??240):0,opacity:$1?1:0,' +
       'paddingLeft:$1?(__NXD.TITLE_PL??10):0,paddingRight:$1?(__NXD.TITLE_PR??8):0,',
+  ],
+
+  [
+    'headerTrans',
+    new RegExp(
+      `transition:slide\\(${ID},\\["max-width","opacity","padding"\\]\\)\\},children:${ID}\\.title`
+    ),
+    'transition:slide($1,__NXD.TITLE_TRANS??["max-width","opacity","padding"])},children:$2.title',
   ],
 
   // The title must lay out at a FIXED width, not against the animating
@@ -125,9 +134,9 @@ const RULES = [
   [
     'titleWrap',
     new RegExp(
-      `transition:slide\\(${ID},\\["max-width","opacity","padding"\\]\\)\\},children:${ID}\\.title\\}\\),`
+      `transition:slide\\(${ID},__NXD\\.TITLE_TRANS\\?\\?\\["max-width","opacity","padding"\\]\\)\\},children:${ID}\\.title\\}\\),`
     ),
-    'transition:slide($1,["max-width","opacity","padding"])},' +
+    'transition:slide($1,__NXD.TITLE_TRANS??["max-width","opacity","padding"])},' +
       'children:jsxRuntimeExports.jsx("span",{style:{width:__NXD.TITLE_W??void 0,' +
       'whiteSpace:__NXD.TITLE_WS??void 0,lineHeight:__NXD.TITLE_LH??void 0,' +
       'display:__NXD.TITLE_BOX??void 0,WebkitBoxOrient:__NXD.TITLE_ORIENT??void 0,' +
@@ -208,16 +217,19 @@ const RULES = [
 let out = src;
 const applied = [];
 for (const [name, re, rep] of RULES) {
-  const n = (src.match(new RegExp(re.source, 'g')) || []).length;
+  // Count against the PROGRESSIVELY PATCHED text, not the original: some rules
+  // deliberately depend on an earlier rule's output (titleWrap anchors on the
+  // transition list that headerTrans has already tokenised).
+  const n = (out.match(new RegExp(re.source, 'g')) || []).length;
   if (n !== 1) {
     // All-or-nothing: a partially applied patch IS the "scaled discs beside
     // unscaled details" bug we are eliminating, so it must be unproducible.
     const probe = re.source.replace(/\\/g, '').slice(0, 28);
-    const at = src.indexOf(probe.replace(/[()[\]?*+|^$]/g, ''));
+    const at = out.indexOf(probe.replace(/[()[\]?*+|^$]/g, ''));
     throw new Error(
       `RULE "${name}" matched ${n} times, expected exactly 1.\n` +
         `  pattern: ${re.source}\n` +
-        (at >= 0 ? `  nearest context @${at}: …${src.slice(at - 100, at + 180)}…\n` : '') +
+        (at >= 0 ? `  nearest context @${at}: …${out.slice(at - 100, at + 180)}…\n` : '') +
         `  The upstream build has drifted. Refusing to write a partial patch.`
     );
   }

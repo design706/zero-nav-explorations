@@ -49,7 +49,17 @@
         BAR_PAD: PAD_Y,            // UNIFORM. see the note above.
         GAP: GAP, GAP_FOCUS: 6,
         TITLE_FLEX: 0,             // the title box must not shrink — see below
-        SEG_PAD_O: (NODE - OPEN_PILL) / 2, SEG_PAD_C: (NODE - MARK) / 2 + 2, SEG_GAP: 7,
+        // Inner insets are (segment height - child height)/2 on BOTH axes, so
+        // the child sits concentric in the pill. The shipped build carried a
+        // "+2" on the collapsed horizontal padding; at 26px discs that reads as
+        // nothing, at 38px it is a visible left/right-vs-top mismatch. Dropped.
+        SEG_PAD_O: (NODE - OPEN_PILL) / 2, SEG_PAD_C: (NODE - MARK) / 2, SEG_GAP: 7,
+        // The collapsed category header is a ZERO-WIDTH flex item that still
+        // costs one gap, and it sits FIRST — so the segment's left inset was
+        // padding + gap while its right was padding alone. A negative right
+        // margin exactly cancels that phantom gap while closed.
+        TITLE_MR_O: 0, TITLE_MR_C: -7,
+        TITLE_TRANS: ['max-width', 'opacity', 'padding', 'margin'],
         // two-line header: 14px type in a NARROWER box than the shipped 240,
         // and the first time no title clips. TITLE_W is fixed on purpose —
         // sized against the animating max-width the text would reflow from
@@ -93,7 +103,7 @@
     to recover an Electron renderer from ERR_NETWORK_CHANGED on a local server;
     on a static host it would fight normal loading.
   -->
-  <script src="/zero-nav-explorations/nav-explorations.js?v=1787171816"></script>
+  <script src="/zero-nav-explorations/nav-explorations.js?v=1787176714"></script>
 </body>
 
 </html>

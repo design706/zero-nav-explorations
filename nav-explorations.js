@@ -204,32 +204,71 @@
      Written as a CUSTOM PROPERTY, not an inline width: React re-renders this
      element (hover, selection, the pulse) and would revert a style property it
      manages, but it never touches an unknown custom property. */
+  var TITLE_CUSHION = 3; // canvas px — see (1) below
+
   function fitTitles(pill) {
+    var nav = pill.parentElement;
+    var k = 1840 / nav.getBoundingClientRect().width;
     var spans = pill.querySelectorAll(':scope > div > button[aria-expanded] > span');
     Array.prototype.forEach.call(spans, function (span) {
-      var range = document.createRange();
-      range.selectNodeContents(span);
-      var rects = range.getClientRects();
-      if (!rects.length) return;
-      var longest = 0;
-      for (var i = 0; i < rects.length; i++) longest = Math.max(longest, rects[i].width);
+      // Measure at the CAP first, so the wrap we pin to is the cap's wrap.
+      span.style.removeProperty('--nx-title-w');
+      var longest = longestLine(span);
       if (!longest) return;
-      // rects are viewport px; the rail lives inside the canvas transform, so
-      // convert back before writing a canvas-space width.
-      var nav = pill.parentElement;
-      var k = 1840 / nav.getBoundingClientRect().width;
-      span.style.setProperty('--nx-title-w', Math.ceil(longest * k) + 'px');
+
+      // (1) CUSHION. Pinning to the measurement exactly is unstable: the line
+      // that measured 127.3 gets a 126px box after unit conversion, no longer
+      // fits, re-breaks to three lines, and the clamp ellipsises it — which is
+      // the truncation in the screenshot. A few px of slack absorbs that, and
+      // cannot reintroduce a wrap, because a wider box never breaks more.
+      // Fractional px on purpose; rounding down is what caused the bug.
+      span.style.setProperty('--nx-title-w', (longest * k + TITLE_CUSHION).toFixed(2) + 'px');
+
+      // (3) VERIFY, and fall back to the proven cap. A title must NEVER
+      // truncate, so the pin is treated as an optimisation that has to earn
+      // itself: if the pinned box is not still exactly two clean lines, drop it
+      // and let the 168px cap take over — measured, all five shipped titles
+      // wrap to two un-clipped lines there (longest line 166.6).
+      if (linesOf(span) > 2 || span.scrollHeight > span.clientHeight + 1) {
+        span.style.removeProperty('--nx-title-w');
+      }
     });
+  }
+
+  function longestLine(span) {
+    var range = document.createRange();
+    range.selectNodeContents(span);
+    var rects = range.getClientRects();
+    var longest = 0;
+    for (var i = 0; i < rects.length; i++) longest = Math.max(longest, rects[i].width);
+    return longest;
+  }
+
+  function linesOf(span) {
+    var range = document.createRange();
+    range.selectNodeContents(span);
+    return range.getClientRects().length;
+  }
+
+  /* (2) RE-FIT WHENEVER THE METRICS CAN STILL MOVE. One measurement is not
+     enough: the two type families load from the Google Fonts CDN, so a swap
+     after the first pass silently invalidates every pinned box. Cheap enough to
+     just re-run at each moment metrics can change. */
+  function scheduleFits(pill) {
+    var run = function () { fitTitles(pill); };
+    run();
+    if (document.fonts) {
+      if (document.fonts.ready) document.fonts.ready.then(run);
+      document.fonts.addEventListener('loadingdone', run);
+    }
+    if (document.readyState === 'complete') setTimeout(run, 0);
+    else window.addEventListener('load', run);
+    window.addEventListener('resize', run);
   }
 
   function initDock() {
     var pill = document.querySelector('nav[aria-label$="timeline"]').firstElementChild;
-    // Fonts must be settled or every line measures short and every box is tight.
-    if (document.fonts && document.fonts.ready) {
-      document.fonts.ready.then(function () { fitTitles(pill); });
-    } else {
-      fitTitles(pill);
-    }
+    scheduleFits(pill);
     document.documentElement.style.setProperty('--nx-conn-focus', '12px');
     document.documentElement.style.setProperty('--nx-seg-pad-focus', '8px');
     document.documentElement.style.setProperty('--nx-seg-gap-focus', '5px');
