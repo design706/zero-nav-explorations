@@ -43,11 +43,12 @@
     (function () {
       var q = new URLSearchParams(location.search);
       if ((q.get('dock') || '').split(',').indexOf('on') === -1) return;
-      var NODE = 56, MARK = 38, OPEN_PILL = 44, PAD_Y = 17, PAD_X = 10, GAP = 10;
+      var NODE = 56, MARK = 38, OPEN_PILL = 44, PAD_Y = 17, GAP = 10;
       window.__NX_DOCK = {
         NODE: NODE, MARK: MARK, OPEN_PILL: OPEN_PILL,
-        BAR_PAD: PAD_Y + 'px ' + PAD_X + 'px',
+        BAR_PAD: PAD_Y,            // UNIFORM. see the note above.
         GAP: GAP, GAP_FOCUS: 6,
+        TITLE_FLEX: 0,             // the title box must not shrink — see below
         SEG_PAD_O: (NODE - OPEN_PILL) / 2, SEG_PAD_C: (NODE - MARK) / 2 + 2, SEG_GAP: 7,
         // two-line header: 14px type in a NARROWER box than the shipped 240,
         // and the first time no title clips. TITLE_W is fixed on purpose —
@@ -92,7 +93,7 @@
     to recover an Electron renderer from ERR_NETWORK_CHANGED on a local server;
     on a static host it would fight normal loading.
   -->
-  <script src="/zero-nav-explorations/nav-explorations.js?v=1787170326"></script>
+  <script src="/zero-nav-explorations/nav-explorations.js?v=1787171816"></script>
 </body>
 
 </html>

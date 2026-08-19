@@ -151,6 +151,12 @@
     style.id = 'nx-focus';
     style.textContent =
       // connectors tighten while focused
+      // The title box: never shrink (it is a flex item, and shrinking is what
+      // makes it re-wrap while the button reveals), and take the per-title
+      // width measured by fitTitles(), falling back to the cap.
+      'nav[aria-label$="timeline"] > div > div > button[aria-expanded] > span' +
+      '{flex-shrink:0!important;width:var(--nx-title-w,168px)!important;}' +
+      // connectors tighten while focused
       'nav[data-nx-focus="1"] > div > span{width:var(--nx-conn-focus,12px)!important;}' +
       // and so do the segments that are NOT the open one. `:has()` is how CSS
       // finally can tell them apart: the open segment is the one whose header
@@ -178,7 +184,52 @@
     document.head.appendChild(style);
   }
 
+  /* The category title box, sized to its OWN longest wrapped line.
+
+     The box has to be a fixed width — sized against the button's animating
+     max-width the text would re-wrap all through the 420ms reveal. But one
+     fixed width for every title leaves the short ones with a lot of dead box:
+     "Growth & Revenue Optimization" only needs ~128px of the 168px cap, and
+     that ~40px gap is what reads as a padding bug between the title and the
+     first company chip.
+
+     So: let it wrap at the cap, measure the longest line it actually produced,
+     then pin the box to that. `Range.getClientRects()` returns one rect PER
+     LINE, which gives the longest line exactly rather than by estimation.
+
+     Re-wrapping is provably safe. Greedy wrapping at width W gives lines Li;
+     set W' = max|Li|. Every line still fits, and no word can climb to the line
+     above, because at W >= W' it already didn't fit. Same break, snug box.
+
+     Written as a CUSTOM PROPERTY, not an inline width: React re-renders this
+     element (hover, selection, the pulse) and would revert a style property it
+     manages, but it never touches an unknown custom property. */
+  function fitTitles(pill) {
+    var spans = pill.querySelectorAll(':scope > div > button[aria-expanded] > span');
+    Array.prototype.forEach.call(spans, function (span) {
+      var range = document.createRange();
+      range.selectNodeContents(span);
+      var rects = range.getClientRects();
+      if (!rects.length) return;
+      var longest = 0;
+      for (var i = 0; i < rects.length; i++) longest = Math.max(longest, rects[i].width);
+      if (!longest) return;
+      // rects are viewport px; the rail lives inside the canvas transform, so
+      // convert back before writing a canvas-space width.
+      var nav = pill.parentElement;
+      var k = 1840 / nav.getBoundingClientRect().width;
+      span.style.setProperty('--nx-title-w', Math.ceil(longest * k) + 'px');
+    });
+  }
+
   function initDock() {
+    var pill = document.querySelector('nav[aria-label$="timeline"]').firstElementChild;
+    // Fonts must be settled or every line measures short and every box is tight.
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(function () { fitTitles(pill); });
+    } else {
+      fitTitles(pill);
+    }
     document.documentElement.style.setProperty('--nx-conn-focus', '12px');
     document.documentElement.style.setProperty('--nx-seg-pad-focus', '8px');
     document.documentElement.style.setProperty('--nx-seg-gap-focus', '5px');
