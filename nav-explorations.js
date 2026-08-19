@@ -7,8 +7,8 @@
  * variants on top of the REAL rail, real chips, real data, forwarding clicks
  * to the app's own buttons so everything stays functional:
  *
- *   ?dock=on         the bottom rail grows like the macOS dock: bigger at
- *                    rest, chips magnify under the cursor, name label above
+ *   ?dock=on         the rail scaled up ~1.7x in height via the bundle's own
+ *                    geometry tokens; the base's hover behaviour is untouched
  *   ?portfolio=on    the Portfolio milestone EXTRACTED from the rail into its
  *                    own corner element (bottom-left; `=top` for top-left).
  *                    Clicking it clicks the real (hidden) rail button.
@@ -111,139 +111,78 @@
     return { pill: pill, segments: segments, milestones: milestones };
   }
 
-  /* ── ?dock=on — the macOS-dock treatment ────────────────────────────────
-     REAL BOX SIZING, never `transform: scale()` on the pill.
+  /* ── ?dock=on — the taller rail ──────────────────────────────────────────
+     Almost nothing happens here any more, and that is the point.
 
-     A transform was the first attempt and it was wrong twice over: it scales
-     every DESCENDANT — including the hover detail card, which is an absolutely
-     positioned child of each chip (`bottom-full … w-[318px]`) — and it does not
-     reflow, so the painted box overflowed the rail's container and rode over
-     the settings gear and the side icons.
+     The geometry lives in the BUNDLE now: `patch-dock.mjs` turned the rail's
+     own token table (`NODE/MARK/OPEN_PILL`) and ~12 literal sites into
+     `__NXD.X ?? <original>`, and the knob script in index.html sets those
+     tokens before the module evaluates. So the component's own layout logic
+     reflows every state — collapsed vs expanded, completed vs current vs
+     locked — instead of a stylesheet trying to guess at states that only exist
+     as inline styles. Two earlier attempts failed exactly there.
 
-     So the size lives in CSS on the chips' own geometry. Everything reflows:
-     the pill grows around its content, stays centred inside the nav's own
-     left/right-40px box, and the detail card keeps its authored 318px because
-     nothing scales it any more.
+     What is left for this file is the one thing the bundle cannot know: a rule
+     in the COMPILED css lifts a right-hand card by a hard-coded 96px, which is
+     `36 (nav bottom) + 54 (old rail height) + 6 (gap)`. Grow the rail and that
+     card sits 38px too low — straight through it. The knob computed the right
+     value into `--nx-lift`; this rule consumes it.
 
-     Geometry is driven by one custom property, `--nx-h`, defaulting to the
-     resting size. Magnification then just writes that property per chip, so
-     growth is real width/height and neighbours are PUSHED rather than
-     overlapped — which is what the Mac dock actually does. It also survives
-     React re-renders: React diffs the style properties it declares and leaves
-     an unknown custom property alone, where a `style.height` write would be
-     reverted on the next paint.
-
-     Sized by MEASUREMENT, not by taste. The binding constraint is the rail's
-     worst case — the segment hover-expanded on the longest category name
-     ("Operational Efficiency & Cost Reduction") plus three company labels —
-     against the settings gear at the bottom-left. Measured clearance there:
-
-         chip 40px →  8px   too tight
-         chip 36px → 28px   ← chosen
-         chip 34px → 38px
-
-     So 36px: a 1.38× bar that still clears every neighbour with room in the
-     state that pushes hardest. */
-  var DOCK_H = 36; // resting chip diameter, canvas px (base: 26)
-  var DOCK_PEAK = 1.5; // dead-under-cursor multiplier
-
-  function installDockCss() {
-    var PILL = 'nav[aria-label$="timeline"] > div';
-    var css = [
-      /* The bar itself. Note the spacing is tightened, not inflated, relative
-         to the icon growth: the constraint is the worst-case hover expansion
-         against the gear and the compass, and close-packed icons is what the
-         Mac dock actually looks like — the SIZE carries the significance, not
-         the gaps. */
-      PILL + '{padding:9px!important;gap:9px!important;}',
-      /* segments: the category clusters */
-      PILL + '>div{gap:6px!important;padding-left:9px!important;padding-right:9px!important;}',
-      /* the connectors between clusters */
-      PILL + '>span{width:14px!important;height:3px!important;}',
-      /* chips. Height only — width follows the logo, so the base keeps owning
-         the hover expansion (padding + label). The base's own height
-         transition is dropped so magnification tracks the cursor exactly;
-         padding/background/shadow keep theirs, so its hover still animates. */
-      PILL +
-        '>div>button{height:var(--nx-h,' +
-        DOCK_H +
-        'px)!important;transition:padding 420ms cubic-bezier(.32,.72,0,1),background-color 420ms cubic-bezier(.32,.72,0,1),box-shadow 420ms cubic-bezier(.32,.72,0,1)!important;}',
-      /* the logo disc — `>span` only, so the detail card (a >div) is untouched */
-      PILL +
-        '>div>button>span:first-child{width:var(--nx-h,' +
-        DOCK_H +
-        'px)!important;height:var(--nx-h,' +
-        DOCK_H +
-        'px)!important;}',
-      PILL +
-        '>div>button>span:first-child>img{width:calc(var(--nx-h,' +
-        DOCK_H +
-        'px)*.66)!important;height:calc(var(--nx-h,' +
-        DOCK_H +
-        'px)*.66)!important;}',
-      /* milestones (Portfolio / Job Portal) ride the same rhythm: 38 → 56 */
-      PILL + '>button{height:50px!important;min-width:50px!important;}',
-      PILL + '>button svg{width:25px!important;height:25px!important;}',
-      /* labels: the base's type is sized for a 26px bar and reads small in a
-         40px one. Nudged, not restyled — and scoped to the chips' own spans so
-         the detail card's typography is left exactly as authored. */
-      PILL + '>div>button>span{font-size:13px!important;}',
-      PILL + '>button>span{font-size:13px!important;}',
-    ].join('\n');
+     Specificity: one extra `html` beats the compiled rule (0-2-2 vs 0-2-1)
+     without `!important`. `--nx-lift` defaults to the shipped 96px, so this is
+     inert when the variant is off and can be installed unconditionally. */
+  function installCardLift() {
     var style = document.createElement('style');
-    style.id = 'nx-dock-css';
-    style.textContent = css;
+    style.id = 'nx-card-lift';
+    style.textContent =
+      'html body[data-navlab-roadmap-rail] .pointer-events-auto>div[class*=absolute][class*=right-]' +
+      '{transform:translateY(calc(-1 * var(--nx-lift, 96px)))}';
     document.head.appendChild(style);
   }
 
-  function initDock(nav, rail) {
-    installDockCss();
-    if (REDUCE) return; // resting size only; no magnification
+  /* Connector compression. The rail exposes `data-nx-focus` while any node is
+     open (patched into CapsuleRail, which owns that state). Everything else in
+     focus mode is driven from the bundle; the connector's width is an inline
+     style on a component that never learns about its siblings, so it is
+     reached from here instead. Scoped to the rail and gated on the attribute,
+     which only ever appears when the variant is on. */
+  function installFocusCss() {
+    var style = document.createElement('style');
+    style.id = 'nx-focus';
+    style.textContent =
+      // connectors tighten while focused
+      'nav[data-nx-focus="1"] > div > span{width:var(--nx-conn-focus,12px)!important;}' +
+      // and so do the segments that are NOT the open one. `:has()` is how CSS
+      // finally can tell them apart: the open segment is the one whose header
+      // button carries aria-expanded="true". The shipped design already does
+      // this in miniature (the open segment's own padding drops 8 -> 4); this
+      // extends the same idea to its neighbours, which is what buys the width
+      // for a 92px bar without ever touching the settings pill.
+      'nav[data-nx-focus="1"] > div > div:not(:has(> button[aria-expanded="true"]))' +
+      '{padding-left:var(--nx-seg-pad-focus,8px)!important;' +
+      'padding-right:var(--nx-seg-pad-focus,8px)!important;' +
+      'gap:var(--nx-seg-gap-focus,5px)!important;}' +
+      // A milestone owns its own open flag, independent of the rail's single
+      // openIndex — so today a milestone can sit expanded WHILE a cluster is
+      // expanded. Measured, that worst case is 1839.7px: it runs 58px over the
+      // settings pill and 83px off the right. The rail's authored model already
+      // says "exactly one cluster open"; this extends the same rule to
+      // milestones, collapsing their labels whenever a cluster takes focus.
+      // Rides the milestone's own 420ms padding transition, so it animates.
+      'nav[data-nx-focus="1"] > div > button' +
+      '{padding-left:0!important;padding-right:0!important;}' +
+      // by CLASS, not position: Job Portal mounts an extra pulsing overlay
+      // span, so its label is not the same child index as Portfolio's.
+      'nav[data-nx-focus="1"] > div > button > span[class*="whitespace-nowrap"]' +
+      '{max-width:0!important;margin-left:0!important;opacity:0!important;}';
+    document.head.appendChild(style);
+  }
 
-    var buttons = Array.prototype.slice.call(rail.pill.querySelectorAll(':scope > div > button'));
-
-    // Sigma in units of real chip PITCH, so the falloff feels the same at any
-    // window scale — the canvas transform changes viewport px under us. 2.4
-    // pitches is wide enough that neighbours visibly participate (the dock
-    // ripple) rather than one icon popping alone.
-    function pitch() {
-      var a = buttons[1] && buttons[1].getBoundingClientRect();
-      var b = buttons[2] && buttons[2].getBoundingClientRect();
-      return a && b ? Math.max(12, b.left - a.left) : 24;
-    }
-
-    var raf = null;
-    var pending = null;
-
-    function apply() {
-      raf = null;
-      if (pending == null) {
-        buttons.forEach(function (b) {
-          b.style.removeProperty('--nx-h');
-        });
-        return;
-      }
-      var sigma = pitch() * 2.4;
-      buttons.forEach(function (b) {
-        var r = b.getBoundingClientRect();
-        var d = Math.abs(pending - (r.left + r.width / 2));
-        var k = 1 + (DOCK_PEAK - 1) * Math.exp(-(d / sigma) * (d / sigma));
-        b.style.setProperty('--nx-h', (DOCK_H * k).toFixed(1) + 'px');
-      });
-    }
-
-    function schedule(x) {
-      pending = x;
-      if (raf == null) raf = requestAnimationFrame(apply);
-    }
-
-    // rAF-batched: one layout pass per frame however fast the cursor moves.
-    nav.addEventListener('mousemove', function (e) {
-      schedule(e.clientX);
-    });
-    nav.addEventListener('mouseleave', function () {
-      schedule(null);
-    });
+  function initDock() {
+    document.documentElement.style.setProperty('--nx-conn-focus', '12px');
+    document.documentElement.style.setProperty('--nx-seg-pad-focus', '8px');
+    document.documentElement.style.setProperty('--nx-seg-gap-focus', '5px');
+    installFocusCss();
   }
 
   /* ── ?portfolio=on — extract the milestone into its own element ─────────
@@ -596,7 +535,7 @@
     body.appendChild(
       chip('Dock grown', WANT_DOCK, function () {
         go({ dock: WANT_DOCK ? null : 'on' });
-      }, WANT_DOCK ? 'On — click to restore' : 'Mac-dock size + magnify')
+      }, WANT_DOCK ? 'On — click to restore' : 'Taller bar, dock presence')
     );
 
     body.appendChild(section('Portfolio'));
@@ -657,6 +596,8 @@
     document.body.appendChild(host);
   }
 
+  installCardLift();
+
   if (document.body) initDebugPanel();
   else addEventListener('DOMContentLoaded', initDebugPanel);
 
@@ -675,7 +616,7 @@
       var rail = readRail(nav);
       if (WANT_CARDS) initCardsHome(nav, rail);
       if (WANT_PF) initPortfolio(nav, rail);
-      if (WANT_DOCK) initDock(nav, rail);
+      if (WANT_DOCK) initDock();
     } catch (err) {
       // An injection must never take the base down with it.
       console.warn('[nav-explorations] failed:', err);

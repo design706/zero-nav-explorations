@@ -19,6 +19,59 @@
     rel="stylesheet">
 
   <title>Zero World — home &amp; navigation reference</title>
+  <!--
+    nav-explorations: the dock scale knob. A CLASSIC inline script, so it runs
+    during parse — strictly before the deferred module below — which is the only
+    way the tokens are set before the rail component evaluates.
+
+    Absent ?dock=on this sets nothing at all: every patched site falls back to
+    `?? <original literal>` and the bundle renders the shipped build exactly.
+
+    THE DESIGN, in one line: the rail cannot get 1.7x BIGGER (16 logo discs
+    against a 1840px band — ~23px of rail width per 1px of MARK), but it can get
+    1.7x TALLER. So the height is bought on the glass (padding 7 -> 17 vertical,
+    x2.43) while the object family only takes x1.47. Every derived relationship
+    the original author encoded is preserved as a formula, not a number:
+      chip.padL   = (OPEN_PILL - MARK)/2      3 = (44-38)/2
+      seg.padX(o) = (NODE - OPEN_PILL)/2      6 = (56-44)/2
+      seg.padX(c) = (NODE - MARK)/2 + 2      11 = 9+2   (the +2 is optical)
+      ms.icon     = NODE/2                   28 = 56/2
+      2*GAP + CONN_W = MARK             10+18+10 = 38
+      check stroke = ring spread     3*16/24 = 2.0px = RING
+  -->
+  <script>
+    (function () {
+      var q = new URLSearchParams(location.search);
+      if ((q.get('dock') || '').split(',').indexOf('on') === -1) return;
+      var NODE = 56, MARK = 38, OPEN_PILL = 44, PAD_Y = 17, PAD_X = 10, GAP = 10;
+      window.__NX_DOCK = {
+        NODE: NODE, MARK: MARK, OPEN_PILL: OPEN_PILL,
+        BAR_PAD: PAD_Y + 'px ' + PAD_X + 'px',
+        GAP: GAP, GAP_FOCUS: 6,
+        SEG_PAD_O: (NODE - OPEN_PILL) / 2, SEG_PAD_C: (NODE - MARK) / 2 + 2, SEG_GAP: 7,
+        // two-line header: 14px type in a NARROWER box than the shipped 240,
+        // and the first time no title clips. TITLE_W is fixed on purpose —
+        // sized against the animating max-width the text would reflow from
+        // many lines to two during the 420ms reveal and pump the rail height.
+        TITLE_FS: '14px', TITLE_MAX: 192, TITLE_PL: 12, TITLE_PR: 12,
+        TITLE_WS: 'normal', TITLE_LH: '17.5px', TITLE_DISPLAY: 'flex', TITLE_AI: 'center',
+        TITLE_W: 168, TITLE_BOX: '-webkit-box', TITLE_ORIENT: 'vertical',
+        TITLE_CLAMP: 2, TITLE_OF: 'hidden', TITLE_TA: 'left',
+        CHIP_PL: (OPEN_PILL - MARK) / 2, CHIP_PR: 13,
+        LABEL_FS: '14px', LABEL_GAP: 8, LABEL_MAX: 150, LABEL_ML: 9,
+        CHECK: 16,
+        RING: '2px', GLOW: '26px', GLOW_IN: '6px',
+        CONN_W: MARK - 2 * GAP, CONN_H: 3,
+        MS_PL: 19, MS_PR: 21, MS_ICON: NODE / 2, MS_ML: 12, MS_LBL_MAX: 240
+      };
+      // The card-lift rule in the compiled CSS is hard-coded to the OLD rail
+      // height (96 = 36 bottom + 54 rail + 6 gap). Recompute it analytically so
+      // it is right on first paint, with no flash.
+      var railH = NODE + 2 * PAD_Y + 2;
+      document.documentElement.style.setProperty('--nx-lift', (36 + railH + 6) + 'px');
+      document.documentElement.dataset.nxDock = '1';
+    })();
+  </script>
   <script type="module" crossorigin src="/zero-nav-explorations/assets/index-CswphSY3.js"></script>
   <link rel="stylesheet" crossorigin href="/zero-nav-explorations/assets/index-DsVFlwhA.css">
   <link rel="preload" as="image" href="/zero-nav-explorations/zero-city-v4.webp" fetchpriority="high">
@@ -39,7 +92,7 @@
     to recover an Electron renderer from ERR_NETWORK_CHANGED on a local server;
     on a static host it would fight normal loading.
   -->
-  <script src="/zero-nav-explorations/nav-explorations.js"></script>
+  <script src="/zero-nav-explorations/nav-explorations.js?v=1787170326"></script>
 </body>
 
 </html>
