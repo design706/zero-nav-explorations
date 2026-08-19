@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Zero</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #FDFAF6;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            overflow: hidden;
+            user-select: none;
+            -webkit-app-region: drag;
+        }
+
+        #video-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        #update-ui {
+            position: absolute;
+            bottom: 40px;
+            left: 0;
+            right: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 10;
+        }
+
+        #update-ui.visible {
+            opacity: 1;
+        }
+
+        #status-text {
+            color: #747474;
+            font-size: 13px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        #progress-track {
+            width: 200px;
+            height: 4px;
+            background-color: rgba(0, 0, 0, 0.1);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        #progress-bar {
+            width: 0%;
+            height: 100%;
+            background-color: #000;
+            transition: width 0.2s ease;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="video-container">
+        <!-- Same brand motion as the renderer cold-start splash (zero-loader.mp4)
+             so the mandatory-update window and the normal launch feel like one
+             thing. Update status/progress UI below is unchanged. -->
+        <video autoplay muted playsinline loop>
+            <source src="videos/zero-splash.mp4" type="video/mp4">
+        </video>
+
+        <div id="update-ui">
+            <div id="status-text"></div>
+            <div id="progress-track">
+                <div id="progress-bar"></div>
+            </div>
+            <button id="retry-btn"
+                style="display:none; margin-top:8px; padding:6px 20px; border:1px solid rgba(0,0,0,0.2); border-radius:6px; background:#fff; color:#333; font-size:12px; font-weight:600; cursor:pointer; -webkit-app-region:no-drag; letter-spacing:0.03em; transition: background 0.2s;"
+                onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='#fff'">Try again</button>
+        </div>
+    </div>
+
+    <script>
+        // splashAPI is exposed by splashPreload.ts (receive-only bridge). Guard so
+        // the splash never white-screens if the bridge is unexpectedly absent — the
+        // logo/spinner still render; only the update-status overlay is inert.
+        const api = window.splashAPI;
+        const updateUI = document.getElementById('update-ui');
+        const statusText = document.getElementById('status-text');
+        const progressBar = document.getElementById('progress-bar');
+        const retryBtn = document.getElementById('retry-btn');
+
+        if (api) {
+            api.onUpdateStatus((text) => {
+                updateUI.classList.add('visible');
+                statusText.innerText = text;
+            });
+
+            api.onUpdateProgress((percent) => {
+                updateUI.classList.add('visible');
+                progressBar.style.width = `${percent}%`;
+            });
+
+            api.onHideStatus(() => {
+                updateUI.classList.remove('visible');
+            });
+
+            api.onShowRetryButton((show) => {
+                retryBtn.style.display = show ? 'inline-block' : 'none';
+            });
+
+            retryBtn.addEventListener('click', () => {
+                retryBtn.style.display = 'none';
+                statusText.innerText = 'Trying again...';
+                progressBar.style.width = '0%';
+                api.retryUpdate();
+            });
+        }
+    </script>
+</body>
+
+</html>

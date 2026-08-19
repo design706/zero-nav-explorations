@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Zero — navigation explorations</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    @font-face {
+      font-family: 'STK_Bureau_Serif';
+      src: url('/zero-nav-explorations/fonts/STK_Bureau_Serif/STKBureau-SerifBook.otf') format('opentype');
+      font-display: swap;
+    }
+    @font-face {
+      font-family: 'PP Supply Mono';
+      src: url('/zero-nav-explorations/fonts/Supply-Free/PPSupplyMono-Regular.otf') format('opentype');
+      font-display: swap;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #141210;
+      color: #fff;
+      font-family: 'Google Sans Flex', system-ui, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 24px;
+    }
+    .wrap { max-width: 640px; width: 100%; display: flex; flex-direction: column; gap: 36px; }
+    .kicker {
+      font-family: 'PP Supply Mono', monospace;
+      font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase;
+      color: rgba(255,255,255,0.45);
+    }
+    h1 {
+      font-family: 'STK_Bureau_Serif', Georgia, serif;
+      font-weight: 400; font-size: 44px; line-height: 1; letter-spacing: -0.02em;
+      margin-top: 8px;
+    }
+    .sub { margin-top: 14px; font-size: 15px; line-height: 1.5; color: rgba(255,255,255,0.6); max-width: 54ch; }
+    .links { display: flex; flex-direction: column; gap: 14px; }
+    a.card {
+      display: block; text-decoration: none; color: inherit;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 22px; padding: 20px 22px;
+      transition: background 0.15s ease, transform 0.15s ease;
+    }
+    a.card:hover { background: rgba(255,255,255,0.09); transform: translateY(-1px); }
+    .card .tag {
+      font-family: 'PP Supply Mono', monospace;
+      font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+      color: rgba(255,255,255,0.45);
+    }
+    .card h2 { font-size: 17px; font-weight: 500; margin: 6px 0 4px; }
+    .card p { font-size: 13.5px; line-height: 1.45; color: rgba(255,255,255,0.55); }
+    .foot { font-size: 12.5px; line-height: 1.5; color: rgba(255,255,255,0.35); }
+    .foot code {
+      font-family: 'PP Supply Mono', monospace; font-size: 11.5px;
+      color: rgba(255,255,255,0.5);
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <header>
+      <div class="kicker">Zero World · navigation explorations · Aug 19</div>
+      <h1>What does it mean<br>to finish a focus?</h1>
+      <p class="sub">
+        Three explorations built directly on the deployed nav-lab — Sanjay's
+        build, real rail, real data, untouched underneath. Answering the Aug 19
+        brief: the bottom navigation grown like the Mac dock, the portfolio
+        pulled out of the journey into its own element, and a card-based
+        homepage for focuses that have no city yet. Desktop viewing.
+      </p>
+    </header>
+
+    <nav class="links">
+      <a class="card" href="/zero-nav-explorations/?dock=on&portfolio=on">
+        <span class="tag">01 · the full composition</span>
+        <h2>Journey dock + portfolio corner</h2>
+        <p>The rail half-again bigger at rest, chips swelling under the cursor
+        like the Mac dock, the base's own hover cards intact — and the
+        Portfolio milestone extracted from the rail into its own corner
+        element. Hover along the rail; click the portfolio.</p>
+      </a>
+      <a class="card" href="/zero-nav-explorations/?dock=on">
+        <span class="tag">02 · dock only</span>
+        <h2>Journey dock</h2>
+        <p>The grown rail alone, portfolio still in place — for judging the dock move on its own.</p>
+      </a>
+      <a class="card" href="/zero-nav-explorations/?dock=on&portfolio=top">
+        <span class="tag">03 · placement alternative</span>
+        <h2>Portfolio at top-left</h2>
+        <p>Same elements, portfolio parked top-left under the wordmark instead —
+        the two placements compared by link.</p>
+      </a>
+      <a class="card" href="/zero-nav-explorations/?home=cards">
+        <span class="tag">04 · the alt homepage</span>
+        <h2>Cards as navigation</h2>
+        <p>The city hidden, a plain base where the rail's own cards ARE the
+        navigation — one column per category, real logos and states, the app's
+        panel and rail still live. The scalable home for any new focus.</p>
+      </a>
+      <a class="card" href="/zero-nav-explorations/">
+        <span class="tag">00 · reference</span>
+        <h2>The screen as it ships today</h2>
+        <p>The untouched deployed base, first-run flow included — for an honest
+        before/after.</p>
+      </a>
+    </nav>
+
+    <footer class="foot">
+      Built as an injection over the deployed nav-lab — the base bundle is
+      byte-identical underneath, and every element reads its data from the
+      rail's own DOM, so nothing here can disagree with the product. Variant
+      links skip the first-run intro; the reference link keeps it.
+    </footer>
+  </main>
+</body>
+</html>

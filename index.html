@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/x-icon" href="/zero-nav-explorations/new-zero-logos/zero-monogram-greenish-256x256.ico" />
+
+  <!--
+    MUST MIRROR index.html:8-10. Two of the app's type families come from the
+    Google Fonts CDN, not from public/fonts. Drop this and text metrics shift
+    subtly everywhere — precisely the kind of near-miss this lab exists to
+    eliminate.
+  -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Faculty+Glyphic&family=Google+Sans+Flex:wght@100;200;300;400;500;600;700;800;900&display=swap"
+    rel="stylesheet">
+
+  <title>Zero World — home &amp; navigation reference</title>
+  <script type="module" crossorigin src="/zero-nav-explorations/assets/index-CswphSY3.js"></script>
+  <link rel="stylesheet" crossorigin href="/zero-nav-explorations/assets/index-DsVFlwhA.css">
+  <link rel="preload" as="image" href="/zero-nav-explorations/zero-city-v4.webp" fetchpriority="high">
+
+  <!-- Zero first-run flow: a variation layered on this build. Removes itself
+       when the flow ends, leaving the nav lab exactly as it shipped. -->
+  <link rel="stylesheet" href="/zero-nav-explorations/firstrun/roadmap.css">
+  <link rel="stylesheet" href="/zero-nav-explorations/firstrun/firstrun-shell.css">
+  <script src="/zero-nav-explorations/firstrun/roadmap-data.js"></script>
+  <script defer src="/zero-nav-explorations/firstrun/firstrun.js"></script>
+</head>
+
+<body>
+  <div id="root"></div>
+
+  <!--
+    index.html's boot-watchdog script is deliberately NOT copied here. It exists
+    to recover an Electron renderer from ERR_NETWORK_CHANGED on a local server;
+    on a static host it would fight normal loading.
+  -->
+  <script src="/zero-nav-explorations/nav-explorations.js"></script>
+</body>
+
+</html>

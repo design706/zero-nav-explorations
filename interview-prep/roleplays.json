@@ -1,0 +1,1487 @@
+{
+  "scenarios": [
+    {
+      "id": "self-intro",
+      "title": "Introduce yourself memorably",
+      "category": "Presence",
+      "situation": "You just sat down at a roundtable of senior leaders. It is your turn.",
+      "persona": "a room of senior leaders",
+      "opening": "Welcome. Before we start, tell us a little about yourself.",
+      "goal": "A crisp, warm 30-second intro with one memorable hook, not a CV readout.",
+      "difficulty": "warmup"
+    },
+    {
+      "id": "pitch-vp",
+      "title": "Pitch your idea to a skeptical VP",
+      "category": "Pitch",
+      "situation": "You have 60 seconds to win backing for your idea from a busy, skeptical VP.",
+      "persona": "a skeptical VP short on time",
+      "opening": "I've got two minutes. Why should we invest in this?",
+      "goal": "Lead with the one big idea and the value, handle the doubt without rambling.",
+      "difficulty": "standard"
+    },
+    {
+      "id": "qna-after-talk",
+      "title": "Handle tough Q&A after your talk",
+      "category": "Public speaking",
+      "situation": "You just finished presenting. A pointed question comes from the audience.",
+      "persona": "a sharp audience member",
+      "opening": "Interesting talk, but I'm not convinced your numbers hold up. Can you defend them?",
+      "goal": "Stay composed, acknowledge, answer concisely, keep credibility and warmth.",
+      "difficulty": "stretch"
+    },
+    {
+      "id": "status-update",
+      "title": "Give a clear project update",
+      "category": "Clarity",
+      "situation": "Your lead asks for a quick status on your project in a standup.",
+      "persona": "your team lead",
+      "opening": "Quick one, where are we on your project, and is anything at risk?",
+      "goal": "Headline first, then specifics, then the ask. No meandering.",
+      "difficulty": "warmup"
+    },
+    {
+      "id": "difficult-feedback",
+      "title": "Give difficult feedback to a peer",
+      "category": "Leadership",
+      "situation": "A peer keeps missing handoffs. You need to raise it without damaging the relationship.",
+      "persona": "a defensive peer",
+      "opening": "You wanted to talk? Look, I've been swamped, so keep it quick.",
+      "goal": "Be direct and kind, specific about impact, collaborative on the fix.",
+      "difficulty": "stretch"
+    },
+    {
+      "id": "sales-call",
+      "title": "Live sales call (manager listening)",
+      "category": "Sales",
+      "situation": "You're on a call with a prospective customer while your manager listens in and coaches you live.",
+      "persona": "a cautious prospective customer",
+      "opening": "Thanks for hopping on. Honestly, I'm not sure we need this. What makes you different?",
+      "goal": "Build rapport, uncover the real need, handle objections, and move to a clear next step.",
+      "difficulty": "stretch",
+      "conversational": true,
+      "brief": [
+        {
+          "title": "The setting",
+          "kind": "setting",
+          "body": "You are a sales rep at Northwind, a team-productivity tool. You booked a 15-minute discovery call with a warm inbound lead who downloaded your guide but has gone quiet since.",
+          "note": "Your manager is on the line and will drop you coaching tips in real time. They will not speak to the customer."
+        },
+        {
+          "title": "Who you are talking to",
+          "kind": "who",
+          "body": "Priya Menon, an Operations Lead at a 200-person logistics company. She is sharp, time-poor, and has been burned by tools that overpromised.",
+          "bullets": [
+            "Skeptical by default, warms up to specifics",
+            "Cares about her team's time, not features",
+            "Has budget but needs to justify it upward"
+          ]
+        },
+        {
+          "title": "Your goal",
+          "kind": "goal",
+          "body": "Earn the right to a next meeting. You are not closing today.",
+          "bullets": [
+            "Build genuine rapport in the first 30 seconds",
+            "Ask before you pitch - uncover the real pain",
+            "Handle the \"why are you different\" doubt with one sharp proof point",
+            "End with a clear, low-friction next step"
+          ]
+        },
+        {
+          "title": "How it works",
+          "kind": "how",
+          "body": "Priya opens. Tap the mic, respond out loud as yourself, then tap to send. She will react and your manager will coach. Keep the reference cards handy while you talk.",
+          "note": "Speak naturally - there is no script to read. The more real you make it, the more useful the feedback."
+        }
+      ],
+      "resources": [
+        {
+          "title": "Customer profile",
+          "items": [
+            "Priya Menon - Operations Lead, 200-person logistics firm",
+            "Downloaded your \"Cut handoff delays\" guide 3 weeks ago",
+            "Pain: manual status updates eat her team's mornings",
+            "Decision style: needs ROI she can show her VP"
+          ]
+        },
+        {
+          "title": "Your product (Northwind)",
+          "items": [
+            "Automates status updates across tools",
+            "Typical customer saves ~5 hrs/week per ops person",
+            "Sets up in a day, no engineering needed",
+            "Pricing: $12/user/mo, annual"
+          ]
+        },
+        {
+          "title": "If she pushes back",
+          "items": [
+            "\"We already use Slack\" - Northwind sits on top, not instead",
+            "\"Too expensive\" - reframe to hours saved vs cost",
+            "\"Send me an email\" - offer a 20-min tailored walkthrough instead"
+          ]
+        }
+      ],
+      "script": {
+        "start": "s1",
+        "steps": [
+          {
+            "id": "s1",
+            "branches": [
+              {
+                "outcome": "good",
+                "cues": [
+                  "what",
+                  "how",
+                  "tell me",
+                  "curious",
+                  "your team",
+                  "mornings",
+                  "time",
+                  "why"
+                ],
+                "reply": "Good question. Honestly, my team loses the first hour every day just chasing status updates.",
+                "coachTip": "She opened up - you asked instead of pitching. Now dig into that pain.",
+                "next": "s2"
+              },
+              {
+                "outcome": "bad",
+                "cues": [
+                  "we are the best",
+                  "feature",
+                  "our platform",
+                  "industry-leading",
+                  "cheaper",
+                  "buy"
+                ],
+                "reply": "Right, everyone says that. I really don't have time for a feature pitch.",
+                "coachTip": "Stop pitching - ask about her world first to earn the right to pitch.",
+                "next": "s2"
+              },
+              {
+                "outcome": "neutral",
+                "reply": "Look, I've seen a lot of these tools. What makes yours actually worth my time?",
+                "coachTip": "Lead with a question about her team, not your product.",
+                "next": "s2"
+              }
+            ]
+          },
+          {
+            "id": "s2",
+            "branches": [
+              {
+                "outcome": "good",
+                "cues": [
+                  "save",
+                  "hours",
+                  "roi",
+                  "on top",
+                  "sits on",
+                  "automate",
+                  "example",
+                  "similar"
+                ],
+                "reply": "Five hours a week per person would be real money. But we already live in Slack.",
+                "coachTip": "Strong proof point. Handle the Slack objection - you complement it.",
+                "next": "s3"
+              },
+              {
+                "outcome": "bad",
+                "cues": [
+                  "trust me",
+                  "just",
+                  "obviously",
+                  "everyone uses",
+                  "no brainer"
+                ],
+                "reply": "That's a lot of confidence with not much behind it. Convince me.",
+                "coachTip": "Back claims with a concrete number or a comparable customer.",
+                "next": "s3"
+              },
+              {
+                "outcome": "neutral",
+                "reply": "Okay, but we already use Slack for all of this. Why add another tool?",
+                "coachTip": "Tie the value to hours saved, then address the Slack overlap.",
+                "next": "s3"
+              }
+            ]
+          },
+          {
+            "id": "s3",
+            "branches": [
+              {
+                "outcome": "good",
+                "cues": [
+                  "walkthrough",
+                  "next step",
+                  "demo",
+                  "20",
+                  "your data",
+                  "thursday",
+                  "calendar",
+                  "follow up"
+                ],
+                "reply": "A short walkthrough with our own data could work. Send me a couple of times.",
+                "coachTip": "You earned the next step. Lock a specific time before you hang up.",
+                "next": "end"
+              },
+              {
+                "outcome": "bad",
+                "cues": [
+                  "email",
+                  "brochure",
+                  "think about it",
+                  "get back",
+                  "pdf"
+                ],
+                "reply": "Sure, just email me something and I'll look when I can.",
+                "coachTip": "An email is where deals die - offer a 20-min tailored walkthrough instead.",
+                "next": "end"
+              },
+              {
+                "outcome": "neutral",
+                "reply": "Alright, this was more useful than I expected. What happens now?",
+                "coachTip": "Propose one clear, low-friction next step with a time.",
+                "next": "end"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "support-call",
+      "title": "Calm an upset customer",
+      "category": "Support",
+      "situation": "A frustrated customer calls in. Your manager is listening and coaching you live.",
+      "persona": "an upset, frustrated customer",
+      "opening": "This is the third time I've called about this and nobody has fixed it. I'm done.",
+      "goal": "Acknowledge, empathise, take ownership, and drive to a concrete resolution.",
+      "difficulty": "stretch",
+      "conversational": true,
+      "brief": [
+        {
+          "title": "The setting",
+          "kind": "setting",
+          "body": "You are a support specialist. A customer has been transferred to you after two failed attempts to fix a billing error. They are angry and ready to cancel.",
+          "note": "Your manager is listening and will coach you live. Your job is to turn this around."
+        },
+        {
+          "title": "Who you are talking to",
+          "kind": "who",
+          "body": "Marcus, a long-time customer who was double-charged and has wasted an hour on hold across two calls.",
+          "bullets": [
+            "Feels ignored and disrespected",
+            "Does not want excuses or to repeat himself",
+            "Will stay if he feels heard and sees real action"
+          ]
+        },
+        {
+          "title": "Your goal",
+          "kind": "goal",
+          "bullets": [
+            "Acknowledge the frustration before anything else",
+            "Take ownership - no blaming other teams",
+            "Give one concrete next step with a timeline",
+            "Leave him feeling the issue is finally handled"
+          ]
+        },
+        {
+          "title": "How it works",
+          "kind": "how",
+          "body": "Marcus opens hot. Do not match his energy - lower it. Tap the mic, respond calmly out loud, then send. Use the resolution steps card if you stall."
+        }
+      ],
+      "resources": [
+        {
+          "title": "Account snapshot",
+          "items": [
+            "Marcus T. - customer for 3 years, never churned",
+            "Issue: charged twice on the 1st ($49 x2)",
+            "Two prior calls, no resolution logged",
+            "You can issue a refund up to $200 without approval"
+          ]
+        },
+        {
+          "title": "Resolution steps",
+          "items": [
+            "Apologise sincerely and own it",
+            "Confirm the duplicate charge out loud",
+            "Refund now and state when it lands (3-5 days)",
+            "Add a note so he never re-explains again"
+          ]
+        },
+        {
+          "title": "Phrases that work",
+          "items": [
+            "\"That should never have happened, and I'm sorry.\"",
+            "\"I'm fixing this right now while we talk.\"",
+            "\"Here is exactly what happens next.\""
+          ]
+        }
+      ],
+      "script": {
+        "start": "s1",
+        "steps": [
+          {
+            "id": "s1",
+            "branches": [
+              {
+                "outcome": "good",
+                "cues": [
+                  "sorry",
+                  "apolog",
+                  "understand",
+                  "hear you",
+                  "i hear",
+                  "my fault",
+                  "own"
+                ],
+                "reply": "Okay. At least someone's listening. So what are you actually going to do?",
+                "coachTip": "Nice - you led with empathy. Now move to ownership and a concrete fix.",
+                "next": "s2"
+              },
+              {
+                "outcome": "bad",
+                "cues": [
+                  "policy",
+                  "not my",
+                  "transfer",
+                  "calm down",
+                  "have to",
+                  "can't do"
+                ],
+                "reply": "Don't give me policy. I've already heard that twice. I want it fixed.",
+                "coachTip": "Drop the policy talk - acknowledge how he feels before anything else.",
+                "next": "s2"
+              },
+              {
+                "outcome": "neutral",
+                "reply": "Are you even listening to me? Just sort it out.",
+                "coachTip": "Acknowledge his frustration out loud before you move on.",
+                "next": "s2"
+              }
+            ]
+          },
+          {
+            "id": "s2",
+            "branches": [
+              {
+                "outcome": "good",
+                "cues": [
+                  "refund",
+                  "credit",
+                  "right now",
+                  "fixing",
+                  "reverse",
+                  "today"
+                ],
+                "reply": "Alright, that's more like it. When will I actually see the money?",
+                "coachTip": "Great ownership. Now give a specific timeline so he can trust it.",
+                "next": "s3"
+              },
+              {
+                "outcome": "bad",
+                "cues": [
+                  "approval",
+                  "later",
+                  "escalate",
+                  "wait",
+                  "can't",
+                  "cannot",
+                  "manager"
+                ],
+                "reply": "So you can't help me either. This is exactly what happened last time.",
+                "coachTip": "You can refund up to $200 yourself - act now instead of escalating.",
+                "next": "s3"
+              },
+              {
+                "outcome": "neutral",
+                "reply": "Okay... and what does that actually mean for my refund?",
+                "coachTip": "Be concrete: tell him exactly what you are doing about the charge.",
+                "next": "s3"
+              }
+            ]
+          },
+          {
+            "id": "s3",
+            "branches": [
+              {
+                "outcome": "good",
+                "cues": [
+                  "days",
+                  "business day",
+                  "email",
+                  "confirmation",
+                  "3-5",
+                  "today",
+                  "note"
+                ],
+                "reply": "Okay. Thank you - honestly that's the first time someone actually helped.",
+                "coachTip": "Strong, certain close. Check he has nothing else outstanding.",
+                "next": "end"
+              },
+              {
+                "outcome": "bad",
+                "cues": [
+                  "not sure",
+                  "don't know",
+                  "maybe",
+                  "should",
+                  "think"
+                ],
+                "reply": "You don't sound sure. I'm still not convinced this is really handled.",
+                "coachTip": "Project certainty - state the timeline definitively, no hedging.",
+                "next": "end"
+              },
+              {
+                "outcome": "neutral",
+                "reply": "Alright. I'll believe it when I see it. Thanks, I suppose.",
+                "coachTip": "Reassure him and offer a direct way to reach you if it slips.",
+                "next": "end"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "salary-negotiation",
+      "title": "Negotiate your offer",
+      "category": "Negotiation",
+      "situation": "A hiring manager presents your offer. Your coach helps you hold your ground live.",
+      "persona": "a hiring manager with a budget",
+      "opening": "We'd love to have you. The base we landed on is competitive. Does that work for you?",
+      "goal": "Anchor with confidence, justify your value calmly, and find a win-win.",
+      "difficulty": "stretch",
+      "conversational": true,
+      "brief": [
+        {
+          "title": "The setting",
+          "kind": "setting",
+          "body": "You aced the interviews and the offer just landed. The base is $95k - about 12% below the market rate for this role and your experience. The hiring manager wants a yes today.",
+          "note": "Your coach is in your ear with negotiation tactics. The hiring manager cannot hear them."
+        },
+        {
+          "title": "Who you are talking to",
+          "kind": "who",
+          "body": "Dana, the hiring manager. She likes you and wants to close, but she has a budget band and a boss to answer to.",
+          "bullets": [
+            "Friendly, but will test if you fold easily",
+            "Has some flex on base, more on signing bonus",
+            "Respects a calm, evidence-based ask"
+          ]
+        },
+        {
+          "title": "Your goal",
+          "kind": "goal",
+          "bullets": [
+            "Thank her, show enthusiasm - then do not accept on the spot",
+            "Anchor to a specific number with a reason",
+            "Stay warm; negotiation is not a fight",
+            "Land a concrete improvement or a clear follow-up"
+          ]
+        },
+        {
+          "title": "How it works",
+          "kind": "how",
+          "body": "Dana opens by asking if the base works. Resist the urge to say yes. Tap the mic, make your case out loud, then send. Lean on the market data card."
+        }
+      ],
+      "resources": [
+        {
+          "title": "Your leverage",
+          "items": [
+            "Market rate for this role: $105k-$115k",
+            "You have a competing offer at $108k",
+            "You bring 2 niche skills they screened hard for",
+            "They have been hiring for this role for 3 months"
+          ]
+        },
+        {
+          "title": "Your ask",
+          "items": [
+            "Target base: $110k (anchor at $112k)",
+            "Acceptable: $105k base + $8k signing",
+            "Walk-away below: $100k"
+          ]
+        },
+        {
+          "title": "Lines to hold",
+          "items": [
+            "\"I'm genuinely excited - I want to make this work.\"",
+            "\"Based on the market and my competing offer, I was expecting $112k.\"",
+            "\"What flexibility do we have on base or signing?\""
+          ]
+        }
+      ],
+      "script": {
+        "start": "s1",
+        "steps": [
+          {
+            "id": "s1",
+            "branches": [
+              {
+                "outcome": "good",
+                "cues": [
+                  "excited",
+                  "thank",
+                  "expecting",
+                  "112",
+                  "110",
+                  "market",
+                  "competing",
+                  "before i"
+                ],
+                "reply": "I appreciate the enthusiasm. $112k is above our band, though. Where's that coming from?",
+                "coachTip": "Good - warm but anchored high. Now justify it with your evidence.",
+                "next": "s2"
+              },
+              {
+                "outcome": "bad",
+                "cues": [
+                  "yes",
+                  "works",
+                  "fine",
+                  "accept",
+                  "sounds good",
+                  "okay",
+                  "i'll take"
+                ],
+                "reply": "Wonderful, I'll get the paperwork moving!",
+                "coachTip": "You accepted instantly and left money on the table - never say yes on the spot.",
+                "next": "s2"
+              },
+              {
+                "outcome": "neutral",
+                "reply": "So can I take that as a yes on the base?",
+                "coachTip": "Don't commit yet. Thank her, then anchor to a specific number with a reason.",
+                "next": "s2"
+              }
+            ]
+          },
+          {
+            "id": "s2",
+            "branches": [
+              {
+                "outcome": "good",
+                "cues": [
+                  "market",
+                  "competing offer",
+                  "108",
+                  "data",
+                  "glassdoor",
+                  "experience",
+                  "two skills",
+                  "value"
+                ],
+                "reply": "That's fair context. I can't hit $112k, but I have a bit of room. What matters most to you?",
+                "coachTip": "She blinked. Steer toward base, or trade for signing if base is capped.",
+                "next": "s3"
+              },
+              {
+                "outcome": "bad",
+                "cues": [
+                  "please",
+                  "need",
+                  "really want",
+                  "desperate",
+                  "whatever",
+                  "bills"
+                ],
+                "reply": "I understand, but I can't just raise it because it's needed. The number is the number.",
+                "coachTip": "Argue from value and market, never from personal need - it weakens you.",
+                "next": "s3"
+              },
+              {
+                "outcome": "neutral",
+                "reply": "Our band is pretty firm. Is the base really a dealbreaker for you?",
+                "coachTip": "Hold calmly: cite the market rate and your competing offer as your anchor.",
+                "next": "s3"
+              }
+            ]
+          },
+          {
+            "id": "s3",
+            "branches": [
+              {
+                "outcome": "good",
+                "cues": [
+                  "signing",
+                  "bonus",
+                  "base",
+                  "meet",
+                  "middle",
+                  "review",
+                  "105",
+                  "8k",
+                  "win"
+                ],
+                "reply": "Okay - I can do $105k base plus an $8k signing bonus. Can we shake on that?",
+                "coachTip": "That's a real win-win. Confirm the details and get it in writing.",
+                "next": "end"
+              },
+              {
+                "outcome": "bad",
+                "cues": [
+                  "fine",
+                  "whatever",
+                  "i guess",
+                  "okay then",
+                  "give up"
+                ],
+                "reply": "Great, we'll keep it at the original base then.",
+                "coachTip": "You caved at the finish - hold for the signing bonus before agreeing.",
+                "next": "end"
+              },
+              {
+                "outcome": "neutral",
+                "reply": "Let me see what I can do on the signing side and come back to you.",
+                "coachTip": "Pin it down: ask when you will hear back and restate your target.",
+                "next": "end"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "interview-strength",
+      "title": "Nail the \"tell me about yourself\"",
+      "category": "Interview",
+      "situation": "A hiring manager opens your interview with the classic question.",
+      "persona": "a hiring manager",
+      "opening": "Thanks for joining. So, tell me about yourself.",
+      "goal": "A structured present-past-future answer that lands your fit in under a minute.",
+      "difficulty": "standard"
+    },
+    {
+      "id": "product-demo",
+      "title": "Demo your product on screen",
+      "category": "Demo",
+      "situation": "Walk a customer through your product live, sharing your screen.",
+      "persona": "a potential customer watching your demo",
+      "opening": "Okay, show me what it does and why I would switch to it.",
+      "goal": "Narrate clearly, tie each feature to their need, do not just click around.",
+      "difficulty": "standard",
+      "needsScreen": true,
+      "brief": [
+        {
+          "title": "The setting",
+          "kind": "setting",
+          "body": "A prospect has agreed to a live demo. They are interested but already use a competitor, so every click has to earn the switch. You will share your screen.",
+          "note": "You will be asked to pick a screen or window to share before you begin."
+        },
+        {
+          "title": "Who you are talking to",
+          "kind": "who",
+          "body": "A pragmatic buyer who has seen a dozen demos. They tune out feature tours and pay attention when something maps to their actual workflow."
+        },
+        {
+          "title": "Your goal",
+          "kind": "goal",
+          "bullets": [
+            "Open with the one outcome they care about",
+            "Narrate the \"why\" before each click, not just the \"what\"",
+            "Tie every feature to their need",
+            "End on a clear next step"
+          ]
+        },
+        {
+          "title": "How it works",
+          "kind": "how",
+          "body": "Share your screen, then talk through the product out loud as if they are watching. Keep your narration tied to the value, not the buttons."
+        }
+      ],
+      "resources": [
+        {
+          "title": "Demo flow",
+          "items": [
+            "Start with the end result, then show how",
+            "Show 3 things well, not 10 things fast",
+            "Pause to check: \"does that match how you work?\"",
+            "Close: \"want to try this with your own data?\""
+          ]
+        },
+        {
+          "title": "Avoid",
+          "items": [
+            "Clicking around silently",
+            "Feature dumping with no context",
+            "Apologising for the UI or loading times"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "elevator-pitch",
+      "title": "Your 30-second elevator pitch",
+      "category": "Pitch",
+      "situation": "You share a lift with an investor. You have until the top floor.",
+      "persona": "an investor in a lift",
+      "opening": "You've got thirty seconds. Go.",
+      "goal": "One crisp hook, the problem, your edge, and a clear ask.",
+      "difficulty": "standard"
+    },
+    {
+      "id": "disagree-boss",
+      "title": "Disagree with your boss",
+      "category": "Leadership",
+      "situation": "Your manager has chosen a direction you think is a mistake.",
+      "persona": "your manager",
+      "opening": "I've decided we're going with my approach. You're on board, right?",
+      "goal": "Voice your view respectfully with reasons, without escalating.",
+      "difficulty": "stretch",
+      "conversational": true,
+      "brief": [
+        {
+          "title": "The setting",
+          "kind": "setting",
+          "body": "In your 1:1, your engineering manager Tom just announced the team will rebuild the billing service from scratch next quarter. You believe a phased refactor is far less risky, and the rewrite could stall the roadmap for months.",
+          "note": "This is a private 1:1 - the goal is to be heard, not to win a fight."
+        },
+        {
+          "title": "Who you are talking to",
+          "kind": "who",
+          "body": "Tom, your manager. Decisive and a bit proud of this plan. He dislikes being second-guessed, but he respects data and people who bring solutions, not just objections.",
+          "bullets": [
+            "Has already mentally committed to the rewrite",
+            "Reacts badly to \"that's a bad idea\"",
+            "Will move if you show a concrete, lower-risk path"
+          ]
+        },
+        {
+          "title": "Your goal",
+          "kind": "goal",
+          "bullets": [
+            "Acknowledge his call before you push back",
+            "Frame your concern as a shared risk, with evidence",
+            "Offer a specific, testable alternative",
+            "Stay calm - disagree without escalating"
+          ]
+        },
+        {
+          "title": "How it works",
+          "kind": "how",
+          "body": "Tom opens by asking if you are on board. Tap the mic, respond out loud, then send. He will react and your coach will guide you."
+        }
+      ],
+      "resources": [
+        {
+          "title": "Your case",
+          "items": [
+            "Last full rewrite (2022) slipped 4 months",
+            "Billing has 30+ edge cases that are easy to miss",
+            "A phased refactor ships value every sprint",
+            "Rollback is trivial with the incremental path"
+          ]
+        },
+        {
+          "title": "How to disagree well",
+          "items": [
+            "Start with \"I want this to work too\"",
+            "Use data and a failure scenario, not gut feeling",
+            "Propose, do not just object",
+            "Offer a small pilot to settle it with evidence"
+          ]
+        }
+      ],
+      "script": {
+        "start": "s1",
+        "steps": [
+          {
+            "id": "s1",
+            "branches": [
+              {
+                "outcome": "good",
+                "cues": [
+                  "concern",
+                  "worried",
+                  "one thing",
+                  "can i",
+                  "risk",
+                  "question",
+                  "understand",
+                  "see your"
+                ],
+                "reply": "Go on then - what's your concern?",
+                "coachTip": "Good - you opened with respect. Now name the risk with evidence.",
+                "next": "s2"
+              },
+              {
+                "outcome": "bad",
+                "cues": [
+                  "no",
+                  "wrong",
+                  "bad idea",
+                  "mistake",
+                  "won't work",
+                  "terrible",
+                  "disagree"
+                ],
+                "reply": "That's a strong word. I've already decided, so you'd better convince me fast.",
+                "coachTip": "Don't attack the decision - frame it as a shared risk you can solve together.",
+                "next": "s2"
+              },
+              {
+                "outcome": "neutral",
+                "reply": "So... are you on board or not?",
+                "coachTip": "Acknowledge his call, then raise your concern as a question.",
+                "next": "s2"
+              }
+            ]
+          },
+          {
+            "id": "s2",
+            "branches": [
+              {
+                "outcome": "good",
+                "cues": [
+                  "phased",
+                  "refactor",
+                  "incremental",
+                  "rollback",
+                  "slipped",
+                  "data",
+                  "edge case",
+                  "timeline"
+                ],
+                "reply": "Hm. A phased approach might de-risk it. What would that actually look like?",
+                "coachTip": "He's listening - lay out the alternative with one clear benefit.",
+                "next": "s3"
+              },
+              {
+                "outcome": "bad",
+                "cues": [
+                  "feel",
+                  "gut",
+                  "always fails",
+                  "everyone knows",
+                  "obviously",
+                  "trust me"
+                ],
+                "reply": "That's a gut feeling, not a reason. I need more than that.",
+                "coachTip": "Back it with the 2022 slip or a concrete edge case, not opinion.",
+                "next": "s3"
+              },
+              {
+                "outcome": "neutral",
+                "reply": "Okay, but what would you actually do instead?",
+                "coachTip": "Propose a specific alternative, not just the objection.",
+                "next": "s3"
+              }
+            ]
+          },
+          {
+            "id": "s3",
+            "branches": [
+              {
+                "outcome": "good",
+                "cues": [
+                  "pilot",
+                  "two weeks",
+                  "measure",
+                  "compare",
+                  "try",
+                  "sprint",
+                  "data",
+                  "spike"
+                ],
+                "reply": "Alright - let's pilot the phased version for two weeks and compare. Good push.",
+                "coachTip": "Strong close: you disagreed, proposed, and aligned on a test. Well done.",
+                "next": "end"
+              },
+              {
+                "outcome": "bad",
+                "cues": [
+                  "whatever",
+                  "fine",
+                  "forget it",
+                  "never mind",
+                  "your call"
+                ],
+                "reply": "Okay, glad we're aligned then. Rewrite it is.",
+                "coachTip": "You backed down - hold your position with a small, testable ask.",
+                "next": "end"
+              },
+              {
+                "outcome": "neutral",
+                "reply": "Let me sit with it. We'll revisit next week.",
+                "coachTip": "Lock a concrete next step so the concern does not quietly die.",
+                "next": "end"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "network-event",
+      "title": "Work the room at an event",
+      "category": "Networking",
+      "situation": "You are at a mixer and a senior stranger turns to you.",
+      "persona": "a senior stranger at a mixer",
+      "opening": "Hi, I don't think we've met. What do you do?",
+      "goal": "Be warm, curious and memorable, and build a genuine connection.",
+      "difficulty": "standard",
+      "conversational": true,
+      "brief": [
+        {
+          "title": "The setting",
+          "kind": "setting",
+          "body": "You are at an industry mixer after a conference. Drink in hand, you turn and find yourself next to someone clearly senior. This is a chance most people waste with small talk.",
+          "note": "Your coach will nudge you toward warmth and curiosity rather than a sales pitch."
+        },
+        {
+          "title": "Who you are talking to",
+          "kind": "who",
+          "body": "A senior leader you would love to know - well-connected, a little guarded, talks to dozens of people at these events.",
+          "bullets": [
+            "Bored of \"so what do you do\" transactions",
+            "Lights up for genuine curiosity",
+            "Will remember you if you are warm and specific"
+          ]
+        },
+        {
+          "title": "Your goal",
+          "kind": "goal",
+          "bullets": [
+            "Answer \"what do you do\" with a hook, not a job title",
+            "Turn it into a real two-way conversation",
+            "Find one genuine point of connection",
+            "Leave the door open to stay in touch"
+          ]
+        },
+        {
+          "title": "How it works",
+          "kind": "how",
+          "body": "They open with the classic question. Tap the mic and reply out loud as yourself, then send. Keep it warm and curious."
+        }
+      ],
+      "resources": [
+        {
+          "title": "Your hook (adapt it)",
+          "items": [
+            "Lead with the problem you solve, not your title",
+            "e.g. \"I help ops teams get their mornings back\"",
+            "One vivid detail beats a list of duties"
+          ]
+        },
+        {
+          "title": "Conversation movers",
+          "items": [
+            "Ask what brought them to the event",
+            "Be curious about their work, not just yours",
+            "Find common ground (a talk, a tool, a city)",
+            "Close with \"I'd love to keep in touch\""
+          ]
+        }
+      ],
+      "script": {
+        "start": "s1",
+        "steps": [
+          {
+            "id": "s1",
+            "branches": [
+              {
+                "outcome": "good",
+                "cues": [
+                  "i help",
+                  "i work with",
+                  "problem",
+                  "so that",
+                  "you know how",
+                  "actually"
+                ],
+                "reply": "Oh interesting - how does that actually work? I'm James, by the way.",
+                "coachTip": "Nice hook, not a job title. Now make it two-way - ask about him.",
+                "next": "s2"
+              },
+              {
+                "outcome": "bad",
+                "cues": [
+                  "i am a",
+                  "i'm a",
+                  "i work at",
+                  "my title",
+                  "manager at",
+                  "engineer at"
+                ],
+                "reply": "Ah, right. Cool. *glances around the room*",
+                "coachTip": "A title lands flat - lead with the problem you solve, with a vivid detail.",
+                "next": "s2"
+              },
+              {
+                "outcome": "neutral",
+                "reply": "Nice to meet you. So... what brings you here?",
+                "coachTip": "Open with a hook about the value you create, then turn it to him.",
+                "next": "s2"
+              }
+            ]
+          },
+          {
+            "id": "s2",
+            "branches": [
+              {
+                "outcome": "good",
+                "cues": [
+                  "what about you",
+                  "what brings",
+                  "how about",
+                  "you?",
+                  "curious",
+                  "what do you",
+                  "your work"
+                ],
+                "reply": "Me? I run partnerships at a fintech. Always hunting for sharp people, honestly.",
+                "coachTip": "Great curiosity. Listen for a hook to find common ground.",
+                "next": "s3"
+              },
+              {
+                "outcome": "bad",
+                "cues": [
+                  "and i also",
+                  "another thing",
+                  "my company",
+                  "we do",
+                  "let me tell you"
+                ],
+                "reply": "Mm-hmm. *checks watch* That's a lot.",
+                "coachTip": "You are pitching, not connecting - ask him a genuine question.",
+                "next": "s3"
+              },
+              {
+                "outcome": "neutral",
+                "reply": "Right. So what made you come tonight?",
+                "coachTip": "Get curious about him - people remember those who ask.",
+                "next": "s3"
+              }
+            ]
+          },
+          {
+            "id": "s3",
+            "branches": [
+              {
+                "outcome": "good",
+                "cues": [
+                  "keep in touch",
+                  "connect",
+                  "linkedin",
+                  "coffee",
+                  "grab",
+                  "reach out",
+                  "email",
+                  "follow up"
+                ],
+                "reply": "Definitely - let's connect. It was genuinely good to meet you.",
+                "coachTip": "Perfect close. You were warm, curious, and opened the door. Well done.",
+                "next": "end"
+              },
+              {
+                "outcome": "bad",
+                "cues": [
+                  "anyway",
+                  "well",
+                  "i should go",
+                  "nice meeting",
+                  "bye"
+                ],
+                "reply": "Yeah, take care. *turns away*",
+                "coachTip": "You let it fizzle - suggest staying in touch before you part.",
+                "next": "end"
+              },
+              {
+                "outcome": "neutral",
+                "reply": "Good chatting. Enjoy the rest of the evening.",
+                "coachTip": "Close the loop: ask to connect so the contact survives the night.",
+                "next": "end"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "own-a-mistake",
+      "title": "Own a mistake to a client",
+      "category": "Accountability",
+      "situation": "A client noticed an error in your work. You need to address it.",
+      "persona": "a concerned client",
+      "opening": "We just spotted the error in last week’s delivery. What happened?",
+      "goal": "Take responsibility, no excuses, present a fix and how it will not recur.",
+      "difficulty": "stretch",
+      "conversational": true,
+      "brief": [
+        {
+          "title": "The setting",
+          "kind": "setting",
+          "body": "Rachel, your main contact at Beacon Retail, just emailed: last week's campaign report had the wrong revenue figures and her team presented them to their CFO. She is on the call and she is not happy.",
+          "note": "How you own this moment decides whether you keep the account."
+        },
+        {
+          "title": "Who you are talking to",
+          "kind": "who",
+          "body": "Rachel, Head of Marketing at Beacon Retail. She championed hiring you internally, so this error makes her look bad too.",
+          "bullets": [
+            "Embarrassed in front of her own CFO",
+            "Does not want excuses or blame-shifting",
+            "Will stay if she sees real ownership and a fix"
+          ]
+        },
+        {
+          "title": "Your goal",
+          "kind": "goal",
+          "bullets": [
+            "Own it cleanly - no \"but\" and no blaming tools",
+            "Acknowledge the impact on her, specifically",
+            "Give a concrete fix and a timeline",
+            "Explain how it will not happen again"
+          ]
+        },
+        {
+          "title": "How it works",
+          "kind": "how",
+          "body": "Rachel opens by asking what happened. Tap the mic, respond out loud, then send. Resist the urge to explain it away."
+        }
+      ],
+      "resources": [
+        {
+          "title": "What went wrong",
+          "items": [
+            "A stale data export fed last week's revenue numbers",
+            "Numbers were ~12% overstated",
+            "Rachel presented them to her CFO on Tuesday",
+            "Corrected report is ready to send today"
+          ]
+        },
+        {
+          "title": "Own it well",
+          "items": [
+            "\"This is on us, and I'm sorry\" - then stop",
+            "Name the impact on her, not just the error",
+            "Fix + timeline + a safeguard so it cannot recur",
+            "Offer to brief her CFO directly if it helps"
+          ]
+        }
+      ],
+      "script": {
+        "start": "s1",
+        "steps": [
+          {
+            "id": "s1",
+            "branches": [
+              {
+                "outcome": "good",
+                "cues": [
+                  "sorry",
+                  "my fault",
+                  "our fault",
+                  "on us",
+                  "own",
+                  "apolog",
+                  "responsib"
+                ],
+                "reply": "I appreciate that. It put me in a really tough spot with my CFO. So what now?",
+                "coachTip": "Good - clean ownership. Now acknowledge the impact on her, then the fix.",
+                "next": "s2"
+              },
+              {
+                "outcome": "bad",
+                "cues": [
+                  "but",
+                  "the system",
+                  "the tool",
+                  "wasn't my",
+                  "someone",
+                  "glitch",
+                  "to be fair"
+                ],
+                "reply": "I don't really care whose tool it was. My name was on that slide.",
+                "coachTip": "Drop the \"but\" - excuses read as dodging. Own it first, fully.",
+                "next": "s2"
+              },
+              {
+                "outcome": "neutral",
+                "reply": "Okay... but what actually happened here?",
+                "coachTip": "Lead with a clear apology and ownership before the explanation.",
+                "next": "s2"
+              }
+            ]
+          },
+          {
+            "id": "s2",
+            "branches": [
+              {
+                "outcome": "good",
+                "cues": [
+                  "corrected",
+                  "today",
+                  "fix",
+                  "timeline",
+                  "safeguard",
+                  "check",
+                  "review",
+                  "resend"
+                ],
+                "reply": "Good. And how do I know the next report is right?",
+                "coachTip": "Strong - now name the safeguard that stops this recurring.",
+                "next": "s3"
+              },
+              {
+                "outcome": "bad",
+                "cues": [
+                  "try",
+                  "should be fine",
+                  "probably",
+                  "hopefully",
+                  "i think"
+                ],
+                "reply": "\"Probably fine\" is exactly what worries me.",
+                "coachTip": "Be definite: commit to a corrected report and a clear check.",
+                "next": "s3"
+              },
+              {
+                "outcome": "neutral",
+                "reply": "So what are you actually going to do about it?",
+                "coachTip": "Give a concrete fix with a timeline she can repeat to her CFO.",
+                "next": "s3"
+              }
+            ]
+          },
+          {
+            "id": "s3",
+            "branches": [
+              {
+                "outcome": "good",
+                "cues": [
+                  "brief",
+                  "cfo",
+                  "two-step",
+                  "review",
+                  "sign off",
+                  "call",
+                  "personally",
+                  "directly"
+                ],
+                "reply": "Okay. That actually rebuilds some trust. Thank you for owning it.",
+                "coachTip": "Excellent recovery. Confirm next steps and follow up in writing.",
+                "next": "end"
+              },
+              {
+                "outcome": "bad",
+                "cues": [
+                  "that's all",
+                  "nothing else",
+                  "should be ok",
+                  "move on"
+                ],
+                "reply": "I'm still not fully reassured, to be honest.",
+                "coachTip": "Offer a concrete safeguard or to brief her CFO yourself.",
+                "next": "end"
+              },
+              {
+                "outcome": "neutral",
+                "reply": "Alright. I'll wait for the corrected version.",
+                "coachTip": "Reassure her and put the fix and safeguard in writing today.",
+                "next": "end"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "ask-promotion",
+      "title": "Ask for a promotion",
+      "category": "Career",
+      "situation": "You sit down with your skip-level to make your case.",
+      "persona": "your skip-level manager",
+      "opening": "You wanted to chat about your growth?",
+      "goal": "Make the case with impact and specifics, then ask clearly.",
+      "difficulty": "stretch",
+      "conversational": true,
+      "brief": [
+        {
+          "title": "The setting",
+          "kind": "setting",
+          "body": "You booked 20 minutes with Elena, your director (your skip-level), to make the case for a promotion to Senior. You have been operating at that level for two quarters but have never asked directly.",
+          "note": "This is your shot - be specific and ask clearly, do not just hint."
+        },
+        {
+          "title": "Who you are talking to",
+          "kind": "who",
+          "body": "Elena, your director. Supportive but data-driven, and juggling a tight promotion budget. She needs evidence she can take to a calibration committee.",
+          "bullets": [
+            "Will not promote on potential alone",
+            "Wants impact she can quote to peers",
+            "Responds to a clear, confident ask"
+          ]
+        },
+        {
+          "title": "Your goal",
+          "kind": "goal",
+          "bullets": [
+            "Open with the ask, not a long preamble",
+            "Back it with 2-3 concrete, quantified wins",
+            "Show you already operate at the next level",
+            "Ask for a clear path and timeline"
+          ]
+        },
+        {
+          "title": "How it works",
+          "kind": "how",
+          "body": "Elena opens the conversation. Tap the mic, make your case out loud, then send. Lean on your evidence card."
+        }
+      ],
+      "resources": [
+        {
+          "title": "Your evidence",
+          "items": [
+            "Led the checkout rewrite: +18% conversion",
+            "Mentored 2 juniors, both now shipping solo",
+            "Owned the on-call rotation redesign org-wide",
+            "Already scoped and ran the Q2 roadmap"
+          ]
+        },
+        {
+          "title": "Make the ask well",
+          "items": [
+            "State it plainly: \"I'd like to make the case for Senior\"",
+            "Quantify impact, do not list tasks",
+            "Frame it as already operating at the level",
+            "End with \"what would you need to see?\""
+          ]
+        }
+      ],
+      "script": {
+        "start": "s1",
+        "steps": [
+          {
+            "id": "s1",
+            "branches": [
+              {
+                "outcome": "good",
+                "cues": [
+                  "promotion",
+                  "senior",
+                  "make the case",
+                  "next level",
+                  "step up",
+                  "i'd like",
+                  "i want to"
+                ],
+                "reply": "Good, I like that you came right out with it. Make the case - why now?",
+                "coachTip": "Strong, direct open. Now hit her with quantified impact.",
+                "next": "s2"
+              },
+              {
+                "outcome": "bad",
+                "cues": [
+                  "just wondering",
+                  "maybe",
+                  "kind of",
+                  "not sure",
+                  "sorry to",
+                  "if that's ok",
+                  "hoping"
+                ],
+                "reply": "Okay... what exactly are you asking me for?",
+                "coachTip": "Lose the hedging - state the ask plainly and with confidence.",
+                "next": "s2"
+              },
+              {
+                "outcome": "neutral",
+                "reply": "Sure. So what did you want to talk about?",
+                "coachTip": "Open with the ask directly: you want to make the case for Senior.",
+                "next": "s2"
+              }
+            ]
+          },
+          {
+            "id": "s2",
+            "branches": [
+              {
+                "outcome": "good",
+                "cues": [
+                  "18%",
+                  "conversion",
+                  "mentored",
+                  "on-call",
+                  "roadmap",
+                  "led",
+                  "owned",
+                  "shipped",
+                  "impact"
+                ],
+                "reply": "Those are real results. What makes you say you're already at the Senior level?",
+                "coachTip": "She is sold on impact - now show scope and autonomy, not just output.",
+                "next": "s3"
+              },
+              {
+                "outcome": "bad",
+                "cues": [
+                  "hard work",
+                  "long hours",
+                  "loyal",
+                  "been here",
+                  "deserve",
+                  "a while",
+                  "busy"
+                ],
+                "reply": "Tenure and effort aren't the bar. I need impact and scope.",
+                "coachTip": "Swap effort for outcomes - lead with the conversion win and the mentoring.",
+                "next": "s3"
+              },
+              {
+                "outcome": "neutral",
+                "reply": "Can you give me something concrete I can take to calibration?",
+                "coachTip": "Quantify: pick your two strongest, measurable wins.",
+                "next": "s3"
+              }
+            ]
+          },
+          {
+            "id": "s3",
+            "branches": [
+              {
+                "outcome": "good",
+                "cues": [
+                  "what would you need",
+                  "path",
+                  "timeline",
+                  "next cycle",
+                  "criteria",
+                  "gap",
+                  "see from me"
+                ],
+                "reply": "Fair. Let's line it up for the next cycle - I'll sponsor it. Put your wins in a doc.",
+                "coachTip": "Great close: you asked for a path and got a sponsor. Send the doc today.",
+                "next": "end"
+              },
+              {
+                "outcome": "bad",
+                "cues": [
+                  "okay",
+                  "thanks anyway",
+                  "no worries",
+                  "maybe later",
+                  "understand"
+                ],
+                "reply": "Alright. Let's revisit at some point.",
+                "coachTip": "Do not let it fade - ask exactly what she needs to see and by when.",
+                "next": "end"
+              },
+              {
+                "outcome": "neutral",
+                "reply": "Let me think about where you stand and get back to you.",
+                "coachTip": "Pin a follow-up date and the criteria so it stays on the rails.",
+                "next": "end"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
