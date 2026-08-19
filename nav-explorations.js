@@ -111,52 +111,138 @@
     return { pill: pill, segments: segments, milestones: milestones };
   }
 
-  /* ── ?dock=on — the macOS-dock treatment ──────────────────────────────── */
-  function initDock(nav, rail) {
-    // Bigger at rest: the ask verbatim — "grow in size like a MacBook dock at
-    // the bottom so that it feels like it's important and it's big".
-    rail.pill.style.transformOrigin = '50% 100%';
-    rail.pill.style.transform = 'scale(1.45)';
-    if (!REDUCE) rail.pill.style.transition = 'transform 420ms ' + EASE;
+  /* ── ?dock=on — the macOS-dock treatment ────────────────────────────────
+     REAL BOX SIZING, never `transform: scale()` on the pill.
 
+     A transform was the first attempt and it was wrong twice over: it scales
+     every DESCENDANT — including the hover detail card, which is an absolutely
+     positioned child of each chip (`bottom-full … w-[318px]`) — and it does not
+     reflow, so the painted box overflowed the rail's container and rode over
+     the settings gear and the side icons.
+
+     So the size lives in CSS on the chips' own geometry. Everything reflows:
+     the pill grows around its content, stays centred inside the nav's own
+     left/right-40px box, and the detail card keeps its authored 318px because
+     nothing scales it any more.
+
+     Geometry is driven by one custom property, `--nx-h`, defaulting to the
+     resting size. Magnification then just writes that property per chip, so
+     growth is real width/height and neighbours are PUSHED rather than
+     overlapped — which is what the Mac dock actually does. It also survives
+     React re-renders: React diffs the style properties it declares and leaves
+     an unknown custom property alone, where a `style.height` write would be
+     reverted on the next paint.
+
+     Sized by MEASUREMENT, not by taste. The binding constraint is the rail's
+     worst case — the segment hover-expanded on the longest category name
+     ("Operational Efficiency & Cost Reduction") plus three company labels —
+     against the settings gear at the bottom-left. Measured clearance there:
+
+         chip 40px →  8px   too tight
+         chip 36px → 28px   ← chosen
+         chip 34px → 38px
+
+     So 36px: a 1.38× bar that still clears every neighbour with room in the
+     state that pushes hardest. */
+  var DOCK_H = 36; // resting chip diameter, canvas px (base: 26)
+  var DOCK_PEAK = 1.5; // dead-under-cursor multiplier
+
+  function installDockCss() {
+    var PILL = 'nav[aria-label$="timeline"] > div';
+    var css = [
+      /* The bar itself. Note the spacing is tightened, not inflated, relative
+         to the icon growth: the constraint is the worst-case hover expansion
+         against the gear and the compass, and close-packed icons is what the
+         Mac dock actually looks like — the SIZE carries the significance, not
+         the gaps. */
+      PILL + '{padding:9px!important;gap:9px!important;}',
+      /* segments: the category clusters */
+      PILL + '>div{gap:6px!important;padding-left:9px!important;padding-right:9px!important;}',
+      /* the connectors between clusters */
+      PILL + '>span{width:14px!important;height:3px!important;}',
+      /* chips. Height only — width follows the logo, so the base keeps owning
+         the hover expansion (padding + label). The base's own height
+         transition is dropped so magnification tracks the cursor exactly;
+         padding/background/shadow keep theirs, so its hover still animates. */
+      PILL +
+        '>div>button{height:var(--nx-h,' +
+        DOCK_H +
+        'px)!important;transition:padding 420ms cubic-bezier(.32,.72,0,1),background-color 420ms cubic-bezier(.32,.72,0,1),box-shadow 420ms cubic-bezier(.32,.72,0,1)!important;}',
+      /* the logo disc — `>span` only, so the detail card (a >div) is untouched */
+      PILL +
+        '>div>button>span:first-child{width:var(--nx-h,' +
+        DOCK_H +
+        'px)!important;height:var(--nx-h,' +
+        DOCK_H +
+        'px)!important;}',
+      PILL +
+        '>div>button>span:first-child>img{width:calc(var(--nx-h,' +
+        DOCK_H +
+        'px)*.66)!important;height:calc(var(--nx-h,' +
+        DOCK_H +
+        'px)*.66)!important;}',
+      /* milestones (Portfolio / Job Portal) ride the same rhythm: 38 → 56 */
+      PILL + '>button{height:50px!important;min-width:50px!important;}',
+      PILL + '>button svg{width:25px!important;height:25px!important;}',
+      /* labels: the base's type is sized for a 26px bar and reads small in a
+         40px one. Nudged, not restyled — and scoped to the chips' own spans so
+         the detail card's typography is left exactly as authored. */
+      PILL + '>div>button>span{font-size:13px!important;}',
+      PILL + '>button>span{font-size:13px!important;}',
+    ].join('\n');
+    var style = document.createElement('style');
+    style.id = 'nx-dock-css';
+    style.textContent = css;
+    document.head.appendChild(style);
+  }
+
+  function initDock(nav, rail) {
+    installDockCss();
     if (REDUCE) return; // resting size only; no magnification
 
-    // The base already grows the HOVERED chip into a labelled pill and opens
-    // its own detail card — that behaviour stays untouched. What it lacks is
-    // the dock feel: NEIGHBOURS swelling in proportion as the cursor travels.
-    // So the gaussian here is deliberately gentle — it composes with the
-    // base's own growth rather than competing with it.
-    var buttons = Array.prototype.slice.call(
-      rail.pill.querySelectorAll(':scope > div > button, :scope > button')
-    );
-    buttons.forEach(function (b) {
-      b.style.transformOrigin = '50% 100%';
-      var t = b.style.transition;
-      b.style.transition = (t ? t + ', ' : '') + 'transform 160ms ' + EASE;
-    });
+    var buttons = Array.prototype.slice.call(rail.pill.querySelectorAll(':scope > div > button'));
 
-    // Sigma in units of real chip pitch, so magnification feels identical at
-    // any window scale — the canvas transform changes viewport px under us.
+    // Sigma in units of real chip PITCH, so the falloff feels the same at any
+    // window scale — the canvas transform changes viewport px under us. 2.4
+    // pitches is wide enough that neighbours visibly participate (the dock
+    // ripple) rather than one icon popping alone.
     function pitch() {
       var a = buttons[1] && buttons[1].getBoundingClientRect();
       var b = buttons[2] && buttons[2].getBoundingClientRect();
       return a && b ? Math.max(12, b.left - a.left) : 24;
     }
 
-    var AMP = 0.55;
-    nav.addEventListener('mousemove', function (e) {
-      var sigma = pitch() * 2.1;
+    var raf = null;
+    var pending = null;
+
+    function apply() {
+      raf = null;
+      if (pending == null) {
+        buttons.forEach(function (b) {
+          b.style.removeProperty('--nx-h');
+        });
+        return;
+      }
+      var sigma = pitch() * 2.4;
       buttons.forEach(function (b) {
         var r = b.getBoundingClientRect();
-        var d = Math.abs(e.clientX - (r.left + r.width / 2));
-        var s = 1 + AMP * Math.exp(-(d / sigma) * (d / sigma));
-        b.style.transform = 'scale(' + s.toFixed(3) + ')';
+        var d = Math.abs(pending - (r.left + r.width / 2));
+        var k = 1 + (DOCK_PEAK - 1) * Math.exp(-(d / sigma) * (d / sigma));
+        b.style.setProperty('--nx-h', (DOCK_H * k).toFixed(1) + 'px');
       });
+    }
+
+    function schedule(x) {
+      pending = x;
+      if (raf == null) raf = requestAnimationFrame(apply);
+    }
+
+    // rAF-batched: one layout pass per frame however fast the cursor moves.
+    nav.addEventListener('mousemove', function (e) {
+      schedule(e.clientX);
     });
     nav.addEventListener('mouseleave', function () {
-      buttons.forEach(function (b) {
-        b.style.transform = 'scale(1)';
-      });
+      schedule(null);
     });
   }
 
