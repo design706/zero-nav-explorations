@@ -62,6 +62,8 @@ for (const f of ['core.js', 'city.js', 'cards.js']) {
   cpSync(join(ROOT, 'src', f), join(OUT, 'src', f));
 }
 if (existsSync(join(ROOT, 'start.html'))) cpSync(join(ROOT, 'start.html'), join(OUT, 'start.html'));
+// scenario title art (cards lane) — repo-root art/, never base/
+if (existsSync(join(ROOT, 'art'))) cpSync(join(ROOT, 'art'), join(OUT, 'nx-art'), { recursive: true });
 
 const v = Date.now(); // the patched bundle keeps its hashed name, so version it
 const KNOB = `  <script>
