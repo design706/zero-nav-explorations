@@ -20,74 +20,63 @@
   var styleEl = NX.styleEl,
     REDUCE = NX.REDUCE;
 
+  /* The rail's chrome — the parts of the grown bar that CSS can reach.
+     (Its GEOMETRY lives in the bundle, driven by tokens; see
+     tools/rules-city.mjs and CITY_TOKENS in tools/tokens.mjs.) */
   function installFocusCss() {
     var style = document.createElement('style');
     style.id = 'nx-focus';
-    style.textContent =
-      // The prototype's own debug button (a compass, fixed bottom-right) is
-      // hidden: that corner belongs to the portfolio now, and a debug control
-      // belongs in the debug panel. The WRAPPER stays mounted so its menu can
-      // still be driven programmatically from the Variants panel.
-      'button[aria-label="Prototype tour"]{display:none!important;}' +
-      // connectors tighten while focused
-      // The title box: never shrink (it is a flex item, and shrinking is what
-      // makes it re-wrap while the button reveals), and take the per-title
-      // width measured by fitTitles(), falling back to the cap.
+    style.textContent = [
+      /* The title box must never shrink. It is a flex item, and shrinking is
+         what makes it re-wrap while the button reveals; the per-title width
+         comes from fitTitles(), falling back to the cap. */
       'nav[aria-label$="timeline"] > div > div > button[aria-expanded] > span' +
-      '{flex-shrink:0!important;width:var(--nx-title-w,168px)!important;}' +
-      // The prototype's own debug button (a compass, fixed bottom-right) is
-      // hidden: that corner belongs to the portfolio now, and a debug control
-      // belongs in the debug panel. The WRAPPER stays mounted so its menu can
-      // still be driven programmatically from the Variants panel.
-      'button[aria-label="Prototype tour"]{display:none!important;}' +
-      // connectors tighten while focused
-      'nav[data-nx-focus="1"] > div > span{width:var(--nx-conn-focus,12px)!important;}' +
-      // and so do the segments that are NOT the open one. `:has()` is how CSS
-      // finally can tell them apart: the open segment is the one whose header
-      // button carries aria-expanded="true". The shipped design already does
-      // this in miniature (the open segment's own padding drops 8 -> 4); this
-      // extends the same idea to its neighbours, which is what buys the width
-      // for a 92px bar without ever touching the settings pill.
+        '{flex-shrink:0!important;width:var(--nx-title-w,168px)!important;}',
+
+      /* The prototype's own debug button (a compass, fixed bottom-right) is
+         hidden: that corner belongs to the portfolio now, and a debug control
+         belongs in the debug panel. Its wrapper stays mounted. */
+      'button[aria-label="Prototype tour"]{display:none!important;}',
+
+      /* The hover card hangs off the CHIP's top edge by a fixed 13px, which
+         was right when the bar was 54px tall — the card's bottom met the bar's
+         top edge and read as attached to it. At 92px the bar's own padding and
+         the segment inset push the chip down, so that same 13px leaves the
+         card's bottom 22px INSIDE the bar (measured). Lifted clear: still
+         connected by the arrow pointing down at its chip, no longer sitting on
+         top of the navigation. */
+      'nav[aria-label$="timeline"] div[class*="w-[318px]"]' +
+        '{margin-bottom:var(--nx-card-gap,13px)!important;}',
+
+      /* Focus mode — while any node is open the rail tightens, which is what
+         buys the width for a 92px bar without ever touching the settings pill.
+         Connectors first. */
+      'nav[data-nx-focus="1"] > div > span' +
+        '{width:var(--nx-conn-focus,12px)!important;}',
+
+      /* …then the segments that are NOT the open one. `:has()` is how CSS can
+         finally tell them apart: the open segment is the one whose header
+         button carries aria-expanded="true". The shipped design already does
+         this in miniature (the open segment's own padding drops 8 -> 4). */
       'nav[data-nx-focus="1"] > div > div:not(:has(> button[aria-expanded="true"]))' +
-      '{padding-left:var(--nx-seg-pad-focus,8px)!important;' +
-      'padding-right:var(--nx-seg-pad-focus,8px)!important;' +
-      'gap:var(--nx-seg-gap-focus,5px)!important;}' +
-      // A milestone owns its own open flag, independent of the rail's single
-      // openIndex — so today a milestone can sit expanded WHILE a cluster is
-      // expanded. Measured, that worst case is 1839.7px: it runs 58px over the
-      // settings pill and 83px off the right. The rail's authored model already
-      // says "exactly one cluster open"; this extends the same rule to
-      // milestones, collapsing their labels whenever a cluster takes focus.
-      // Rides the milestone's own 420ms padding transition, so it animates.
+        '{padding-left:var(--nx-seg-pad-focus,8px)!important;' +
+        'padding-right:var(--nx-seg-pad-focus,8px)!important;' +
+        'gap:var(--nx-seg-gap-focus,5px)!important;}',
+
+      /* A milestone owns its own open flag, independent of the rail's single
+         openIndex — so a milestone could sit expanded WHILE a cluster is
+         expanded. Measured, that worst case ran 58px over the settings pill
+         and 83px off the right. The rail's authored model already says
+         "exactly one cluster open"; this extends it to milestones. Targeted by
+         CLASS, not child index: Job Portal carries an extra pulse overlay. */
       'nav[data-nx-focus="1"] > div > button' +
-      '{padding-left:0!important;padding-right:0!important;}' +
-      // by CLASS, not position: Job Portal mounts an extra pulsing overlay
-      // span, so its label is not the same child index as Portfolio's.
+        '{padding-left:0!important;padding-right:0!important;}',
       'nav[data-nx-focus="1"] > div > button > span[class*="whitespace-nowrap"]' +
-      '{max-width:0!important;margin-left:0!important;opacity:0!important;}';
+        '{max-width:0!important;margin-left:0!important;opacity:0!important;}',
+    ].join('\n');
     document.head.appendChild(style);
   }
 
-  /* The category title box, sized to its OWN longest wrapped line.
-
-     The box has to be a fixed width — sized against the button's animating
-     max-width the text would re-wrap all through the 420ms reveal. But one
-     fixed width for every title leaves the short ones with a lot of dead box:
-     "Growth & Revenue Optimization" only needs ~128px of the 168px cap, and
-     that ~40px gap is what reads as a padding bug between the title and the
-     first company chip.
-
-     So: let it wrap at the cap, measure the longest line it actually produced,
-     then pin the box to that. `Range.getClientRects()` returns one rect PER
-     LINE, which gives the longest line exactly rather than by estimation.
-
-     Re-wrapping is provably safe. Greedy wrapping at width W gives lines Li;
-     set W' = max|Li|. Every line still fits, and no word can climb to the line
-     above, because at W >= W' it already didn't fit. Same break, snug box.
-
-     Written as a CUSTOM PROPERTY, not an inline width: React re-renders this
-     element (hover, selection, the pulse) and would revert a style property it
-     manages, but it never touches an unknown custom property. */
   var TITLE_CUSHION = 3; // canvas px — see (1) below
 
   function fitTitles(pill) {
@@ -187,6 +176,10 @@
     scheduleFits(pill);
     // after the map's own intro settles, put the view on the current scenario
     setTimeout(frameCurrentScenario, 1200);
+    // 40px lands the card ~16px clear of the bar — near the bar's own 17px
+    // internal padding, so the air outside it echoes the air inside it rather
+    // than being an arbitrary number. (Measured: 13px overlapped by 22.)
+    document.documentElement.style.setProperty('--nx-card-gap', '40px');
     document.documentElement.style.setProperty('--nx-conn-focus', '12px');
     document.documentElement.style.setProperty('--nx-seg-pad-focus', '8px');
     document.documentElement.style.setProperty('--nx-seg-gap-focus', '5px');
