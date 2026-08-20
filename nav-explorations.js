@@ -321,7 +321,7 @@
     return total ? { done: done, total: total } : { done: 5, total: 16 };
   }
 
-  function buildDockedPortfolio() {
+  function buildDockedPortfolio(ringHidden) {
     /* Mounted INSIDE the HUD canvas layer, as a sibling of the settings gear's
        own wrapper — not fixed to the viewport like the debug button that used
        to sit here. That matters twice over: it inherits the same 40/33 inset
@@ -378,8 +378,10 @@
       c.setAttribute('pathLength', String(p.total));
       c.setAttribute('stroke-dasharray', 0.78 + ' ' + (p.total - 0.78));
       c.setAttribute('stroke-dashoffset', String(-i));
-      c.setAttribute('stroke', 'rgba(255,255,255,0.16)');
-      c.style.transition = 'stroke 220ms ease';
+      // When the dock arrives via the unlock, the ring is not there yet: the
+      // track fades in on landing and only then do the done segments count up.
+      c.setAttribute('stroke', ringHidden ? 'rgba(255,255,255,0)' : 'rgba(255,255,255,0.16)');
+      c.style.transition = 'stroke 260ms ease';
       c.className.baseVal = 'nx-seg';
       ring.appendChild(c);
       segs.push(c);
@@ -414,48 +416,55 @@
     return { host: host, btn: btn, ring: ring, segs: segs, progress: p };
   }
 
-  /* Light the done segments. Staggered on unlock so the ring reads as filling
-     rather than switching. */
-  function drawRing(dock, stagger) {
+  /* The ring arrives in two moves: the empty track first — that is the shape
+     of the whole journey, all sixteen slots — and then the done segments
+     counting up one at a time. Timer-driven, so a throttled compositor can
+     slow the fades but can never leave the ring half-drawn. */
+  function revealRing(dock, staged) {
+    var TRACK = 'rgba(255,255,255,0.16)',
+      DONE = 'rgb(73, 186, 97)';
+    dock.segs.forEach(function (seg) { seg.setAttribute('stroke', TRACK); });
     dock.segs.forEach(function (seg, i) {
-      var on = i < dock.progress.done;
-      var apply = function () {
-        seg.setAttribute('stroke', on ? 'rgb(73, 186, 97)' : 'rgba(255,255,255,0.16)');
-      };
-      if (on && stagger && !REDUCE) setTimeout(apply, i * 28);
-      else apply();
+      if (i >= dock.progress.done) return;
+      var light = function () { seg.setAttribute('stroke', DONE); };
+      if (staged && !REDUCE) setTimeout(light, 260 + i * 55);
+      else light();
     });
   }
 
   function initPortfolioDock() {
-    var dock = buildDockedPortfolio();
-    requestAnimationFrame(function () { drawRing(dock, false); });
+    var dock = buildDockedPortfolio(false);
+    revealRing(dock, false);
     return dock;
   }
 
   /* ── the unlock, choreographed ───────────────────────────────────────────
-     The first pass was a linear tween between two rects, which is why it read
-     as weak: no anticipation, a straight slide, and a dead stop. Five beats:
+     The rail already knows how to expand a milestone into a labelled pill —
+     that is its hover state, and it is the shape the announcement borrows.
+     So the announcement is not a fake overlay: the REAL chip expands, which
+     means the bar genuinely widens around it and then closes again. Beats:
 
-       1. ANTICIPATE  the chip unlocks IN PLACE — green fills, a ring expands
-                      off it, the label collapses. The change is acknowledged
-                      before anything moves.
-       2. DETACH      the rail chip fades and a clone takes its exact rect; the
-                      rail starts closing the gap on its own 420ms curve, so
-                      the bar reflows UNDER the flight instead of after it.
-       3. ARC         a quadratic Bézier, control point lifted above the
-                      midpoint, sampled into keyframes — it lifts out of the
-                      bar and falls into the corner rather than sliding there.
-       4. SETTLE      overshoot and return. The bounce.
-       5. REVEAL      crossfade to the real dock; the segments light in
-                      sequence, so the ring reads as filling.
+       1. UNLOCK    green fills the chip, a halo rings out, and it expands into
+                    the labelled pill reading "Portfolio unlocked" — the bar
+                    grows to make room, exactly as it does on hover.
+       2. HOLD      the announcement sits long enough to be read.
+       3. CONTRACT  the label collapses; the chip returns to icon size and the
+                    bar comes back with it.
+       4. HOP OUT   a clone takes the chip's place and the chip collapses out,
+                    so the bar settles to its new, shorter width.
+       5. ARC       a quadratic Bézier lifted above the straight line, so it
+                    lifts out of the bar and falls into the corner.
+       6. SETTLE    overshoot and rest.
+       7. RING      the dashed track fades in, then the done segments light one
+                    by one — the portfolio arriving, then counting itself.
 
-     Reduced motion collapses 1–4 into a crossfade with the same outcome. */
+     Every beat lands its resting state on a timer, never on an animation
+     event: an animation that never advances (throttled or backgrounded tab)
+     would otherwise strand the sequence mid-flight. */
   var EASE_OUT = 'cubic-bezier(.22,.61,.36,1)';
+  var EASE_RAIL = 'cubic-bezier(.32,.72,0,1)'; // the rail's own curve
 
   function quadPath(from, to, lift) {
-    // control point above the midpoint — the higher the lift, the more the
-    // clone arcs up and over rather than tracking the straight line
     var cx = (from.x + to.x) / 2;
     var cy = Math.min(from.y, to.y) - lift;
     var pts = [];
@@ -470,7 +479,7 @@
     return pts;
   }
 
-  function playUnlock() {
+  function playUnlock(onDone) {
     var pillEl = document.querySelector('nav[aria-label$="timeline"] > div');
     if (!pillEl) return;
     var chip = Array.prototype.filter.call(pillEl.children, function (c) {
@@ -479,47 +488,73 @@
     var old = document.getElementById('nx-portfolio-dock');
     if (old) old.remove();
 
-    var dock = buildDockedPortfolio();
+    var dock = buildDockedPortfolio(true); // ring starts hidden — it arrives later
     dock.host.style.opacity = '0';
     var target = dock.btn.getBoundingClientRect();
+    var at = function (ms, fn) { setTimeout(fn, ms); };
 
     if (!chip || REDUCE) {
       dock.host.style.opacity = '1';
-      drawRing(dock, false);
+      revealRing(dock, false);
+      if (onDone) onDone();
       return;
     }
 
-    var from = chip.getBoundingClientRect();
+    var label = Array.prototype.filter.call(chip.children, function (c) {
+      return /whitespace-nowrap/.test((c.className || '').toString());
+    })[0];
+    var GREEN = 'rgb(73, 186, 97)';
 
-    // ── 1. anticipation: it unlocks where it stands ──────────────────────
-    chip.animate(
-      [
-        { backgroundColor: 'rgba(255,255,255,0.05)', transform: 'scale(1)' },
-        { backgroundColor: 'rgba(73,186,97,0.24)', transform: 'scale(1.14)', offset: 0.6 },
-        { backgroundColor: 'rgba(73,186,97,0.24)', transform: 'scale(1)' },
-      ],
-      { duration: 360, easing: EASE_OUT, fill: 'forwards' }
-    );
+    // ── 1. unlock, and announce at the bar's own expanded width ───────────
+    chip.style.transition =
+      'padding 420ms ' + EASE_RAIL + ', background-color 420ms ease, box-shadow 420ms ease';
+    chip.style.background = 'rgba(73,186,97,0.24)';
+    chip.style.boxShadow = 'inset 0 0 0 1.5px ' + GREEN + ', 0 0 30px -6px ' + GREEN;
+    chip.style.paddingLeft = ((window.__NX_DOCK && window.__NX_DOCK.MS_PL) || 19) + 'px';
+    chip.style.paddingRight = ((window.__NX_DOCK && window.__NX_DOCK.MS_PR) || 21) + 'px';
+    var icon = chip.querySelector('svg path');
+    if (icon) icon.setAttribute('fill', GREEN);
+    if (label) {
+      label.innerHTML =
+        '<span style="color:rgba(255,255,255,0.95)">Portfolio unlocked</span>';
+      label.style.maxWidth = '240px';
+      label.style.opacity = '1';
+      label.style.marginLeft = ((window.__NX_DOCK && window.__NX_DOCK.MS_ML) || 12) + 'px';
+    }
+
+    var from0 = chip.getBoundingClientRect();
     var halo = styleEl(document.createElement('div'), {
       position: 'fixed',
-      left: from.left + 'px',
-      top: from.top + 'px',
-      width: from.width + 'px',
-      height: from.height + 'px',
+      left: from0.left + 'px',
+      top: from0.top + 'px',
+      width: from0.width + 'px',
+      height: from0.height + 'px',
       borderRadius: '999px',
-      boxShadow: '0 0 0 2px rgb(73, 186, 97)',
+      boxShadow: '0 0 0 2px ' + GREEN,
       zIndex: '299',
       pointerEvents: 'none',
     });
     document.body.appendChild(halo);
-    halo.animate([{ transform: 'scale(1)', opacity: 0.9 }, { transform: 'scale(2.1)', opacity: 0 }], {
-      duration: 620,
+    halo.animate([{ transform: 'scale(1)', opacity: 0.9 }, { transform: 'scale(1.9)', opacity: 0 }], {
+      duration: 700,
       easing: EASE_OUT,
     });
-    setTimeout(function () { halo.remove(); }, 700); // never rely on onfinish to clean up
+    at(760, function () { halo.remove(); });
 
-    // ── 2. detach + the rail closes behind it ────────────────────────────
-    setTimeout(function () {
+    // ── 2 & 3. hold, then contract back to icon size ──────────────────────
+    at(1100, function () {
+      chip.style.paddingLeft = '0px';
+      chip.style.paddingRight = '0px';
+      if (label) {
+        label.style.maxWidth = '0px';
+        label.style.opacity = '0';
+        label.style.marginLeft = '0px';
+      }
+    });
+
+    // ── 4. hop out; the bar closes to its new width ───────────────────────
+    at(1520, function () {
+      var from = chip.getBoundingClientRect();
       var clone = styleEl(document.createElement('div'), {
         position: 'fixed',
         left: '0px',
@@ -530,88 +565,76 @@
         marginTop: -from.height / 2 + 'px',
         borderRadius: '999px',
         background: 'rgba(73,186,97,0.24)',
-        boxShadow: '0 0 0 2px rgb(73, 186, 97), 0 0 26px -6px rgb(73, 186, 97)',
+        boxShadow: 'inset 0 0 0 1.5px ' + GREEN + ', 0 0 26px -6px ' + GREEN,
         zIndex: '300',
         pointerEvents: 'none',
         display: 'grid',
         placeItems: 'center',
         willChange: 'transform',
+        transform: 'translate(' + (from.left + from.width / 2) + 'px,' + (from.top + from.height / 2) + 'px)',
       });
       clone.innerHTML =
         '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">' +
         '<path fill-rule="evenodd" clip-rule="evenodd" fill="#fff" d="' + PF_ICON_PATH + '"/></svg>';
       document.body.appendChild(clone);
 
-      chip.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 160, fill: 'forwards' });
+      chip.style.opacity = '0';
       chip.style.transition =
-        'max-width 420ms cubic-bezier(.32,.72,0,1), margin 420ms cubic-bezier(.32,.72,0,1)';
+        'max-width 420ms ' + EASE_RAIL + ', margin 420ms ' + EASE_RAIL + ', opacity 160ms ease';
       chip.style.maxWidth = '0px';
       chip.style.minWidth = '0px';
       chip.style.marginLeft = '-' + ((window.__NX_DOCK && window.__NX_DOCK.GAP) || 10) + 'px';
       var sep = chip.previousElementSibling;
       if (sep && sep.tagName === 'SPAN') {
-        sep.style.transition = 'width 420ms cubic-bezier(.32,.72,0,1), opacity 200ms ease';
+        sep.style.transition = 'width 420ms ' + EASE_RAIL + ', opacity 200ms ease';
         sep.style.width = '0px';
         sep.style.opacity = '0';
       }
 
-      // ── 3. the arc ─────────────────────────────────────────────────────
+      // ── 5. the arc ──────────────────────────────────────────────────────
       var A = { x: from.left + from.width / 2, y: from.top + from.height / 2 };
       var B = { x: target.left + target.width / 2, y: target.top + target.height / 2 };
       var lift = Math.max(90, Math.abs(B.x - A.x) * 0.22);
       var scaleTo = target.width / from.width;
-      var frames = quadPath(A, B, lift).map(function (pt, i, arr) {
-        var t = i / (arr.length - 1);
-        return {
-          transform:
-            'translate(' + pt.x + 'px,' + pt.y + 'px) scale(' + (1 + (scaleTo - 1) * t) + ')',
-        };
-      });
       var FLY = 740,
         SETTLE = 300;
-      clone.animate(frames, { duration: FLY, easing: EASE_OUT, fill: 'forwards' });
-
-      /* Beats 4 and 5 run on explicit offsets rather than chained `onfinish`.
-         Chaining looked cleaner but left the sequence one dropped event away
-         from stranding the clone on screen with the real dock still at zero
-         opacity — which is exactly what it did. Fixed offsets always land. */
-      var at = function (ms, fn) { setTimeout(fn, ms); };
-      var atCorner = 'translate(' + B.x + 'px,' + B.y + 'px) scale(';
-
-      // 4. settle — overshoot, undershoot, rest
-      at(FLY, function () {
+      at(140, function () {
         clone.animate(
-          [
-            { transform: atCorner + scaleTo + ')' },
-            { transform: atCorner + scaleTo * 1.1 + ')', offset: 0.4 },
-            { transform: atCorner + scaleTo * 0.97 + ')', offset: 0.72 },
-            { transform: atCorner + scaleTo + ')' },
-          ],
-          { duration: SETTLE, easing: 'cubic-bezier(.34,1.56,.64,1)', fill: 'forwards' }
+          quadPath(A, B, lift).map(function (pt, i, arr) {
+            var t = i / (arr.length - 1);
+            return {
+              transform:
+                'translate(' + pt.x + 'px,' + pt.y + 'px) scale(' + (1 + (scaleTo - 1) * t) + ')',
+            };
+          }),
+          { duration: FLY, easing: EASE_OUT, fill: 'forwards' }
         );
-      });
 
-      // 5. reveal — the real dock takes over, then the ring fills segment by
-      //    segment so the portfolio reads as countable, not as a percentage
-      at(FLY + SETTLE, function () {
-        /* The RESTING state is written synchronously and the fade is purely
-           additive (no `fill: 'forwards'`). A transition or a filled animation
-           would leave the dock invisible for good if the compositor never
-           advanced it — which is exactly what a throttled/backgrounded tab
-           does. Correct at rest first; the fade is a bonus. */
-        dock.host.style.transition = 'none';
-        dock.host.style.opacity = '1';
-        // Deliberately NOT animated. An animation — even an unfilled one —
-        // overrides inline style for its whole active phase, so if the
-        // compositor never advances it (throttled tab, background window) the
-        // dock stays pinned to its first keyframe and is invisible for good.
-        // The crossfade is carried by the clone fading out over it instead.
-        clone.style.opacity = '0';
-        clone.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 200, easing: 'ease' });
-        at(220, function () { clone.remove(); });
-        drawRing(dock, true);
+        // ── 6. settle ─────────────────────────────────────────────────────
+        var atCorner = 'translate(' + B.x + 'px,' + B.y + 'px) scale(';
+        at(FLY, function () {
+          clone.animate(
+            [
+              { transform: atCorner + scaleTo + ')' },
+              { transform: atCorner + scaleTo * 1.1 + ')', offset: 0.4 },
+              { transform: atCorner + scaleTo * 0.97 + ')', offset: 0.72 },
+              { transform: atCorner + scaleTo + ')' },
+            ],
+            { duration: SETTLE, easing: 'cubic-bezier(.34,1.56,.64,1)', fill: 'forwards' }
+          );
+        });
+
+        // ── 7. the dock takes over, then the ring arrives and counts ──────
+        at(FLY + SETTLE, function () {
+          dock.host.style.opacity = '1';
+          clone.style.opacity = '0';
+          clone.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 200, easing: 'ease' });
+          at(220, function () { clone.remove(); });
+          at(120, function () { revealRing(dock, true); });
+          at(900, function () { if (onDone) onDone(); });
+        });
       });
-    }, 300);
+    });
   }
 
   /* ── ?home=cards — plain base, the chips laid out as cards ──────────────
@@ -789,65 +812,88 @@
      reloads it causes. Anchored to the VIEWPORT (fixed, own stacking context
      at z 9500) so it clears the app's canvas transform and the first-run
      overlay both. */
-  function initDebugPanel() {
-    var KEY = 'nav-exp:panel-open';
-    var open = sessionStorage.getItem(KEY) === '1';
+  /* ── the debug panel ─────────────────────────────────────────────────────
+     Always open, two rows, one decision each. The earlier collapsible version
+     grew a menu of variants that were really the same screen; what is left is
+     the only two questions worth asking: which home, and where the portfolio
+     is in its life.
 
-    /* TOP CENTRE — the only region no variant claims. The scenario card owns
-       the right, the wordmark the top-left, streak/XP the top-right, the rail
-       the bottom, and the extracted portfolio the bottom-left. A panel that
-       covers the element under review is worse than no panel. */
+     Tapping UNLOCKED from the locked state PLAYS the unlock rather than
+     reloading into the end state — the transition is the thing being reviewed,
+     so it should not need a separate button to fire it. */
+  function initDebugPanel() {
+    var MONO = '"PP Supply Mono", ui-monospace, SFMono-Regular, Menlo, monospace';
     var host = styleEl(document.createElement('div'), {
       position: 'fixed',
       left: '50%',
-      top: '14px',
+      top: '16px',
       transform: 'translateX(-50%)',
       zIndex: '9500',
-      fontFamily: 'ui-sans-serif, system-ui, sans-serif',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
       gap: '8px',
+      pointerEvents: 'auto',
     });
+    host.id = 'nx-panel';
 
-    function chip(label, active, onClick, sub) {
-      var b = styleEl(document.createElement('button'), {
+    var playing = false;
+
+    function row(title, options) {
+      var r = styleEl(document.createElement('div'), {
         display: 'flex',
-        flexDirection: 'column',
-        gap: '2px',
-        alignItems: 'flex-start',
-        width: '100%',
-        textAlign: 'left',
-        cursor: 'pointer',
-        border: '1px solid ' + (active ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.13)'),
-        background: active ? 'rgba(255,255,255,0.16)' : 'rgba(255,255,255,0.05)',
-        color: '#fff',
-        borderRadius: '12px',
-        padding: '9px 11px',
-        font: '500 12.5px/1.25 inherit',
-        transition: 'background 120ms ease, border-color 120ms ease',
+        alignItems: 'center',
+        gap: '8px',
+        padding: '7px 7px 7px 18px',
+        borderRadius: '999px',
+        background: 'rgba(18,17,16,0.72)',
+        backdropFilter: 'blur(18px) saturate(1.1)',
+        WebkitBackdropFilter: 'blur(18px) saturate(1.1)',
+        border: '1px solid rgba(255,255,255,0.09)',
+        boxShadow: '0 18px 40px -18px rgba(0,0,0,0.7)',
       });
-      b.innerHTML =
-        '<span>' +
-        label +
-        '</span>' +
-        (sub
-          ? '<span style="font-size:10.5px;font-weight:400;color:rgba(255,255,255,0.5)">' +
-            sub +
-            '</span>'
-          : '');
-      b.addEventListener('click', onClick);
-      b.addEventListener('mouseenter', function () {
-        if (!active) b.style.background = 'rgba(255,255,255,0.1)';
+      var lab = styleEl(document.createElement('span'), {
+        font: '500 11px/1 ' + MONO,
+        letterSpacing: '0.14em',
+        textTransform: 'uppercase',
+        color: 'rgba(255,255,255,0.5)',
+        marginRight: '4px',
+        whiteSpace: 'nowrap',
       });
-      b.addEventListener('mouseleave', function () {
-        if (!active) b.style.background = 'rgba(255,255,255,0.05)';
+      lab.textContent = title;
+      r.appendChild(lab);
+
+      options.forEach(function (opt) {
+        var b = styleEl(document.createElement('button'), {
+          font: '500 11px/1 ' + MONO,
+          letterSpacing: '0.12em',
+          textTransform: 'uppercase',
+          border: '0',
+          cursor: 'pointer',
+          borderRadius: '999px',
+          padding: '10px 16px',
+          whiteSpace: 'nowrap',
+          transition: 'background 160ms ease, color 160ms ease',
+          background: opt.active ? '#ffffff' : 'rgba(255,255,255,0.10)',
+          color: opt.active ? '#111111' : 'rgba(255,255,255,0.45)',
+        });
+        b.type = 'button';
+        b.textContent = opt.label;
+        b.addEventListener('click', function () {
+          if (playing) return;
+          opt.onClick(b);
+        });
+        b.addEventListener('mouseenter', function () {
+          if (!opt.active) b.style.background = 'rgba(255,255,255,0.18)';
+        });
+        b.addEventListener('mouseleave', function () {
+          if (!opt.active) b.style.background = 'rgba(255,255,255,0.10)';
+        });
+        r.appendChild(b);
       });
-      return b;
+      return r;
     }
 
-    /* One writer for the URL, so a control can never express a state the
-       links cannot. Passing null drops a param. */
     function go(params) {
       var u = new URL(location.href);
       for (var k in params) {
@@ -857,99 +903,50 @@
       location.href = u.toString();
     }
 
-    var body = styleEl(document.createElement('div'), {
-      width: '212px',
-      borderRadius: '18px',
-      padding: '14px',
-      display: open ? 'flex' : 'none',
-      flexDirection: 'column',
-      gap: '9px',
-    });
-    for (var g in GLASS) body.style[g] = GLASS[g];
-    body.style.border = '1px solid rgba(255,255,255,0.12)';
+    var locked = PF_STATE === 'locked';
 
-    function section(title) {
-      var s = styleEl(document.createElement('div'), {
-        font: '500 9.5px/1 inherit',
-        letterSpacing: '0.1em',
-        textTransform: 'uppercase',
-        color: 'rgba(255,255,255,0.4)',
-        marginTop: '2px',
-      });
-      s.textContent = title;
-      return s;
-    }
-
-    body.appendChild(section('Home'));
-    body.appendChild(
-      chip('City', !WANT_CARDS, function () {
-        go({ home: null });
-      }, 'The rendered world')
-    );
-    body.appendChild(
-      chip('Cards', WANT_CARDS, function () {
-        go({ home: 'cards' });
-      }, 'Plain base, scales to any focus')
+    host.appendChild(
+      row('Home', [
+        { label: 'City', active: !WANT_CARDS, onClick: function () { go({ home: null }); } },
+        { label: 'Cards', active: WANT_CARDS, onClick: function () { go({ home: 'cards' }); } },
+      ])
     );
 
-    body.appendChild(section('Portfolio'));
-    body.appendChild(
-      chip('Locked', PF_STATE === 'locked', function () {
-        go({ pf: 'locked' });
-      }, 'One project from opening')
-    );
-    body.appendChild(
-      chip('Unlocked', PF_STATE !== 'locked', function () {
-        go({ pf: null });
-      }, 'Docked, ring filling')
-    );
-    var play = chip('▶  Play unlock', false, function () {
-      if (PF_STATE !== 'locked') {
-        // needs the locked chip on screen to fly FROM
-        sessionStorage.setItem('nx-autoplay-unlock', '1');
-        go({ pf: 'locked' });
-        return;
-      }
-      playUnlock();
-    }, 'Unlocks, flies, lands');
-    play.style.marginTop = '2px';
-    body.appendChild(play);
-
-    // The collapsed handle. Names the live variant count so a screenshot of a
-    // variant is never mistaken for the base.
-    var count = WANT_CARDS ? 1 : 0;
-    var toggle = styleEl(document.createElement('button'), {
-      cursor: 'pointer',
-      border: '1px solid rgba(255,255,255,0.14)',
-      color: '#fff',
-      borderRadius: '999px',
-      padding: '8px 14px',
-      font: '500 11.5px/1 inherit',
-      letterSpacing: '0.04em',
-      display: 'flex',
-      alignItems: 'center',
-      gap: '7px',
-      order: '-1', // handle above, menu drops beneath it
-    });
-    for (var g2 in GLASS) toggle.style[g2] = GLASS[g2];
-    toggle.innerHTML =
-      '<span style="width:6px;height:6px;border-radius:999px;background:' +
-      (PF_STATE === 'locked' ? 'rgba(255,255,255,0.35)' : '#4ade80') +
-      '"></span><span>' +
-      (WANT_CARDS ? 'Cards' : 'City') +
-      '</span>';
-    toggle.addEventListener('click', function () {
-      open = !open;
-      body.style.display = open ? 'flex' : 'none';
-      sessionStorage.setItem(KEY, open ? '1' : '0');
-    });
-
-    host.appendChild(body);
-    host.appendChild(toggle);
+    var pfRow = row('Portfolio', [
+      {
+        label: 'Locked',
+        active: locked,
+        onClick: function () { if (!locked) go({ pf: 'locked' }); },
+      },
+      {
+        label: 'Unlocked',
+        active: !locked,
+        onClick: function (btn) {
+          if (!locked) return;
+          // play it here rather than reloading into the end state
+          playing = true;
+          playUnlock(function () {
+            playing = false;
+            locked = false;
+            var u = new URL(location.href);
+            u.searchParams.delete('pf');
+            history.replaceState(null, '', u.toString());
+            // written with the transition off: a stalled transition would
+            // otherwise leave the panel showing the state we just left
+            var btns = pfRow.querySelectorAll('button');
+            btns[0].style.transition = 'none';
+            btns[0].style.background = 'rgba(255,255,255,0.10)';
+            btns[0].style.color = 'rgba(255,255,255,0.45)';
+            btn.style.transition = 'none';
+            btn.style.background = '#ffffff';
+            btn.style.color = '#111111';
+          });
+        },
+      },
+    ]);
+    host.appendChild(pfRow);
     document.body.appendChild(host);
   }
-
-  installCardLift();
 
   if (document.body) initDebugPanel();
   else addEventListener('DOMContentLoaded', initDebugPanel);
@@ -972,12 +969,7 @@
       // The corner portfolio only exists in the dock variant, and only once it
       // has left the rail.
       if (WANT_DOCK && PF_STATE !== 'locked') initPortfolioDock();
-      // "Play unlock" pressed from a state without the chip on screen: it
-      // routed here first, so play on arrival.
-      if (WANT_DOCK && PF_STATE === 'locked' && sessionStorage.getItem('nx-autoplay-unlock')) {
-        sessionStorage.removeItem('nx-autoplay-unlock');
-        setTimeout(playUnlock, 600);
-      }
+
     } catch (err) {
       // An injection must never take the base down with it.
       console.warn('[nav-explorations] failed:', err);
