@@ -349,11 +349,61 @@
         'html[data-nx-home="cards"] [aria-label*="day streak"] [class*="bg-[rgba(0,0,0"]{' +
         'background:transparent !important;backdrop-filter:none !important;' +
         '-webkit-backdrop-filter:none !important;border-color:' + C.line + ' !important}',
-      'html[data-nx-home="cards"] [aria-label^="Level "] *,' +
-        'html[data-nx-home="cards"] [aria-label*="day streak"] *{color:' + C.tx + ' !important}',
+      /* The popovers were designed against dark glass with a THREE-step text
+         hierarchy (white / white-60 / white-45) and translucent-white
+         sub-surfaces. A blanket color:ink flattened all of it — inversion,
+         not design. Map each tier to its ink equivalent so the hierarchy
+         survives the flip; the orange streak accents already read on white
+         and stay untouched. */
+      'html[data-nx-home="cards"] [aria-label^="Level "] [class*="text-white"],' +
+        'html[data-nx-home="cards"] [aria-label*="day streak"] [class*="text-white"]' +
+        '{color:' + C.tx + ' !important}',
+      'html[data-nx-home="cards"] [aria-label^="Level "] [class*="text-white/7"],' +
+        'html[data-nx-home="cards"] [aria-label^="Level "] [class*="text-white/6"],' +
+        'html[data-nx-home="cards"] [aria-label*="day streak"] [class*="text-white/7"],' +
+        'html[data-nx-home="cards"] [aria-label*="day streak"] [class*="text-white/6"]' +
+        '{color:' + C.tx2 + ' !important}',
+      'html[data-nx-home="cards"] [aria-label^="Level "] [class*="text-white/5"],' +
+        'html[data-nx-home="cards"] [aria-label^="Level "] [class*="text-white/4"],' +
+        'html[data-nx-home="cards"] [aria-label^="Level "] [class*="text-white/3"],' +
+        'html[data-nx-home="cards"] [aria-label*="day streak"] [class*="text-white/5"],' +
+        'html[data-nx-home="cards"] [aria-label*="day streak"] [class*="text-white/4"],' +
+        'html[data-nx-home="cards"] [aria-label*="day streak"] [class*="text-white/3"]' +
+        '{color:' + C.tx3 + ' !important}',
+      // translucent-white sub-surfaces (day cells, milestone chips) vanish on
+      // white — wash + hairline instead
+      'html[data-nx-home="cards"] [aria-label^="Level "] [class*="bg-white/"],' +
+        'html[data-nx-home="cards"] [aria-label*="day streak"] [class*="bg-white/"],' +
+        'html[data-nx-home="cards"] [aria-label^="Level "] [class*="bg-[rgba(255,255,255"],' +
+        'html[data-nx-home="cards"] [aria-label*="day streak"] [class*="bg-[rgba(255,255,255"]' +
+        '{background:' + C.wash + ' !important;border-color:' + C.line + ' !important}',
+      /* The panel SURFACE carries its dark glass as an INLINE style
+         (glassPanel.ts), which class-mapped rules never reach — so the panel
+         was opening as a ghost: transparent surface, faint text. The popover
+         hangs off a `top-full` positioning wrapper inside each pill; its first
+         child is the surface. Paper, hairline, a real drop. */
+      'html[data-nx-home="cards"] [aria-label^="Level "] [class*="top-full"] > div,' +
+        'html[data-nx-home="cards"] [aria-label*="day streak"] [class*="top-full"] > div' +
+        '{background:' + C.card + ' !important;' +
+        'border:1px solid ' + C.line + ' !important;' +
+        'box-shadow:0 24px 60px -24px rgba(13,13,13,0.28) !important;' +
+        'backdrop-filter:none !important;-webkit-backdrop-filter:none !important}',
+      // the caret diamond joins the panel surface
+      'html[data-nx-home="cards"] [aria-label^="Level "] [class*="rotate-45"],' +
+        'html[data-nx-home="cards"] [aria-label*="day streak"] [class*="rotate-45"]' +
+        '{background:' + C.card + ' !important;border:1px solid ' + C.line + ' !important}',
       // the portfolio ring's empty track needs to be visible on paper
       'html[data-nx-home="cards"] #nx-portfolio-dock circle[stroke="rgba(255,255,255,0.16)"]{' +
         'stroke:rgba(13,13,13,.14) !important}',
+      // the fake macOS title bar: the dark fill is a CHILD of the transparent
+      // z-[90] wrapper — on paper it becomes a whisper of shell, not a slab
+      'html[data-nx-home="cards"] div[class*="z-[90]"] > div' +
+        '{background:rgba(13,13,13,0.04) !important}',
+      'html[data-nx-home="cards"] div[class*="z-[90]"] button' +
+        '{background:' + C.card + ' !important;box-shadow:0 0 0 1px ' + C.line + ' !important}',
+      'html[data-nx-home="cards"] div[class*="z-[90]"] button *{color:' + C.tx + ' !important}',
+      // the map pin-to-card leader line belongs to the city, not the deck
+      'html[data-nx-home="cards"] svg[class*="z-[29]"]{display:none !important}',
       // the debug panel keeps its dark treatment — it is not part of the design
     ].join('\n');
     document.head.appendChild(css);
@@ -392,27 +442,37 @@
         'linear-gradient(180deg,#FAFAF9 0%,#F3F8F3 45%,#DDF0E5 74%,#C3E4E7 100%)',
     });
 
-    /* header — same position as before; the deck grew, the chrome did not */
+    /* No header block any more: the journey text and focus title are gone —
+       the cards carry the story. Only the wordmark remains, aligned to the
+       streak/XP pills' centreline so the top reads as ONE row. Measured at
+       runtime: the pills live in the scaled canvas, this layer does not. */
     var appMark = document.querySelector('img[alt="Zero"]');
-    var head = styleEl(document.createElement('div'), {
-      padding: '40px 64px 0', display: 'flex', flexDirection: 'column', gap: '5px', flex: '0 0 auto',
-    });
     if (appMark) {
       var mark = styleEl(document.createElement('img'), {
-        height: '28px', width: 'auto', display: 'block', alignSelf: 'flex-start',
-        filter: 'invert(1)', opacity: '.92', marginBottom: '18px',
+        position: 'absolute',
+        left: '64px',
+        top: '78px',
+        height: '28px',
+        width: 'auto',
+        filter: 'invert(1)',
+        opacity: '.92',
+        zIndex: '3',
       });
       mark.src = appMark.getAttribute('src');
       mark.alt = 'Zero';
-      head.appendChild(mark);
+      layer.appendChild(mark);
+      // measure twice: once now, once after the canvas transform settles —
+      // the first pass can catch the pills mid-layout and land ~13px high
+      var alignMark = function () {
+        var pills = document.querySelector('[aria-label*="day streak"]');
+        if (!pills) return;
+        var y = pills.getBoundingClientRect();
+        if (y.height > 0) mark.style.top = Math.round(y.top + y.height / 2 - 14) + 'px';
+      };
+      requestAnimationFrame(alignMark);
+      setTimeout(alignMark, 600);
+      addEventListener('resize', alignMark);
     }
-    head.innerHTML +=
-      '<span style="font:500 12px/1 ' + MONO + ';letter-spacing:.12em;text-transform:uppercase;color:' +
-      C.tx3 + ";font-feature-settings:'lnum' 1,'tnum' 1\">Your journey · " +
-      String(doneN + 1).padStart(2, '0') + ' / ' + String(totalJourney).padStart(2, '0') + '</span>' +
-      '<h1 style="font:400 34px/1 ' + SERIF + ';letter-spacing:-.02em;color:' + C.tx + ';margin:0">' +
-      window.__NX_ROADMAP.journeyTitle + '</h1>';
-    layer.appendChild(head);
 
     var scroller = styleEl(document.createElement('div'), {
       flex: '1 1 auto', display: 'flex', alignItems: 'center', gap: '44px',
