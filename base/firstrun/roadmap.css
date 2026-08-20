@@ -1,0 +1,161 @@
+/* Lifted VERBATIM from zero-onboarding-mvp.html; every selector prefixed
+   with #zfr so it cannot reach the nav lab's own UI. Do not hand-edit. */
+#zfr .rmghost {display:flex; flex-direction:column; gap:9px; padding:2px 0;}
+#zfr .rmghost .rgc {display:flex; gap:12px; align-items:center; height:54px; padding:0 18px;
+  border-radius:16px; corner-shape:squircle; border:1.5px dashed rgba(13,13,13,.13);
+  width:min(430px,100%);}
+#zfr .rmghost .rgc i {height:10px; border-radius:5px; background:rgba(13,13,13,.08); display:block;}
+#zfr .rmghost .rgc i:first-child {width:32%;}
+#zfr .rmghost .rgc i:last-child {width:18%;}
+#zfr .rmghost .rgc.two {opacity:.55; width:min(392px,92%);}
+#zfr body.dark .rmghost .rgc {border-color:rgba(255,255,255,.14);}
+#zfr body.dark .rmghost .rgc i {background:rgba(255,255,255,.10);}
+#zfr .mvsc {background:var(--card); border:1px solid var(--line); border-radius:18px; padding:15px 18px 14px;
+  text-align:left; box-shadow:0 10px 28px rgba(0,0,0,.06);}
+#zfr .mvsc .mtop {display:flex; align-items:center; gap:11px; margin-bottom:9px;}
+#zfr .mvsc .mlg {width:34px; height:34px; border-radius:12px; background:#fff; border:1px solid var(--line);
+  display:flex; align-items:center; justify-content:center;}
+#zfr .mvsc .mlg svg {width:21px; height:21px;}
+#zfr .mvsc .mco {font-size:13.5px; font-weight:600; flex:1;}
+#zfr .mvsc .mwk {font-size:12.5px; font-weight:500; color:var(--tx-3); font-variant-numeric:tabular-nums;}
+#zfr .mvsc .mprob {font-family:var(--serif); font-size:17px; line-height:1.32; margin-bottom:0; padding-right:26px;}
+#zfr .mvsc.open .mprob {margin-bottom:12px;}
+#zfr .mvsc .mmgr {display:flex; align-items:center; gap:9px; font-size:13px; color:var(--tx-2); margin-bottom:12px;}
+#zfr .mvsc .mmgr .ma {width:24px; height:24px; border-radius:50%; color:#fff; font-size:11px; font-weight:700;
+  display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+#zfr .mvsc {position:relative; cursor:pointer; transition:box-shadow .4s ease, transform .4s ease;
+  padding:10px 42px 10px 13px;}
+#zfr .mvsc:not(.open) {display:flex; align-items:center; column-gap:14px; flex-wrap:nowrap;}
+#zfr .mvsc:not(.open) .mtop {flex:0 0 auto;}
+#zfr .mvsc:not(.open) .mco {flex:0 0 auto; white-space:nowrap;}
+#zfr .mvsc:not(.open) .mprob {flex:1 1 auto; min-width:0;}
+#zfr .mvsc:not(.open) .mvbody {flex:0 0 0; width:0;}
+#zfr .mvsc.open {display:block; padding:15px 18px 14px;}
+#zfr .mvsc:not(.open) .mtop {margin-bottom:0;}
+#zfr .mvsc:not(.open) .mprob {font-size:15.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  padding-right:0; color:var(--tx-2);}
+#zfr .mvsc:hover {transform:translateY(-1px); box-shadow:0 16px 40px rgba(0,0,0,.09);}
+#zfr .mvsc .mvbody {max-height:0; overflow:hidden; opacity:0;
+  transition:max-height .55s cubic-bezier(.625,.05,0,1), opacity .4s ease;}
+#zfr .mvsc.open .mvbody {max-height:300px; opacity:1;}
+#zfr .mvsc .mvchev {position:absolute; right:17px; top:50%; font-size:13px; color:var(--tx-4);
+  transition:transform .45s cubic-bezier(.625,.05,0,1); transform:translateY(-50%) rotate(180deg);}
+#zfr .mvsc.open .mvchev {top:19px; transform:rotate(0deg);}
+#zfr .mvsc .mvdel {margin-top:11px; font-size:13px; line-height:1.5; color:var(--tx-2);}
+#zfr .mvsc .mvdel b {color:var(--tx); font-weight:600;}
+#zfr .rmhow {font-size:13.5px; line-height:1.55; color:var(--tx-2); max-width:52ch; margin:0 0 20px;}
+#zfr .mvsc .mrow2 {display:flex; flex-wrap:wrap; gap:6px;}
+#zfr .mvsc .mtag {display:inline-flex; align-items:center; gap:6px; height:26px; padding:0 11px;
+  border-radius:999px; background:var(--wash); border:1px solid var(--line-2); font-size:12.5px; color:var(--tx-2);}
+#zfr .mvsc .mtag svg {width:12px; height:12px;}
+#zfr .mvsc .mtag.sk {background:transparent; border-style:dashed;}
+#zfr .mvunlock {display:flex; align-items:center; gap:11px; padding:9px 16px; border-radius:14px;
+  background:var(--ink); color:var(--on-ink); font-size:14.5px; font-weight:600;
+  box-shadow:0 14px 34px rgba(0,0,0,.18);}
+#zfr .mvunlock .mue {font-size:17px;}
+#zfr .mvunlock.green {background:linear-gradient(120deg,#0d2417 0%,#18432f 55%,#1d5238 100%); color:#eafff0;
+  box-shadow:0 18px 44px rgba(24,67,47,.35), inset 0 0 0 1px rgba(164,244,178,.28);}
+#zfr .mvunlock.green .mue {width:30px; height:30px; border-radius:11px; background:rgba(164,244,178,.16);
+  display:flex; align-items:center; justify-content:center;}
+#zfr .mvunlock.green .mus {color:rgba(164,244,178,.8);}
+#zfr .mvsc .ma {position:relative; overflow:hidden;}
+#zfr .mvsc .ma img {position:absolute; inset:0; width:100%; height:100%; object-fit:cover;}
+#zfr .mvsc .ma i {font-style:normal;}
+#zfr .mvsc .mavs {display:inline-flex; align-items:center;}
+#zfr .mvsc .mavs .ma {border:2px solid var(--card);}
+#zfr .mvsc .mavs .ma+.ma {margin-left:-8px;}
+#zfr .mvunlock .mus {font-weight:400; opacity:.65; margin-left:auto; font-size:12.5px;}
+#zfr .mvunlock.big {justify-content:space-between; gap:18px; padding:18px 20px; min-height:92px;}
+#zfr .mvunlock.big .mub {display:flex; align-items:center; gap:14px; min-width:0;}
+#zfr .mvunlock.big .mutx {display:flex; flex-direction:column; gap:3px; text-align:left; min-width:0;}
+#zfr .mvunlock.big .mutx b {font-size:15.5px; letter-spacing:-.015em;}
+#zfr .mvunlock.big .mus {margin-left:0;}
+#zfr .rmwrap {text-align:left; max-width:880px; margin:0 auto;}
+#zfr .rmhead {display:flex; align-items:center; justify-content:space-between; gap:14px;
+  margin:2px 0 24px;}
+#zfr .rmhead.sticky {position:sticky; top:0; z-index:5; padding:14px 4px 18px; margin:0 0 10px;
+  background:var(--shell);}
+#zfr .rmhead.sticky .rmfade {position:absolute; left:0; right:0; bottom:-26px; height:26px;
+  background:linear-gradient(var(--shell), transparent); pointer-events:none;}
+#zfr .rmtitle {font-family:var(--serif); font-size:clamp(23px,1.9vw,31px); letter-spacing:-.02em;}
+#zfr .rmweeks {display:inline-flex; align-items:center; gap:8px; height:38px; padding:0 16px;
+  border-radius:999px; background:var(--ink); color:var(--on-ink); font-size:13.5px; font-weight:600;
+  box-shadow:0 8px 22px rgba(0,0,0,.16); white-space:nowrap;}
+#zfr .rmrows {position:relative; padding-bottom:42vh; transition:padding-bottom .9s ease;}
+#zfr .rmrows.settled {padding-bottom:12vh;}
+#zfr .rmrow {display:flex; flex-wrap:nowrap; align-items:flex-start; gap:14px; position:relative; padding-bottom:18px;}
+#zfr .rmrow::before {content:''; position:absolute; left:9px; top:40px; bottom:-20px; width:2px;
+  background:var(--line-2); border-radius:1px; opacity:0; transition:opacity .6s ease .2s;}
+#zfr .rmrow.on::before {opacity:1;}
+#zfr .rmrow:last-child::before {display:none;}
+#zfr .rmseg {position:absolute; left:9px; top:40px; bottom:-20px; width:2px; border-radius:1px;
+  overflow:hidden; z-index:1;}
+#zfr .rmseg b {display:block; width:100%; height:100%; border-radius:1px; background:#2f9c45;
+  transform:scaleY(0); transform-origin:0 0;}
+#zfr .rmrow:last-child .rmseg {display:none;}
+#zfr .rmrow.done>.rmrail .rmnode {border-color:#2f9c45; box-shadow:0 0 0 4px rgba(47,156,69,.15);}
+#zfr .rmrow.done>.rmrail .rmnode:not(.spark)::after {content:''; width:8px; height:8px; border-radius:50%; background:#2f9c45;}
+#zfr .rmrow.done>.rmrail .rmnode.spark {background:#2f9c45; border-color:#2f9c45; color:#fff;}
+#zfr .rmrail {width:104px; flex-shrink:0; padding-top:18px; position:relative;}
+#zfr .rmnode {width:20px; height:20px; border-radius:50%; background:var(--card); border:2px solid var(--tx-3);
+  box-shadow:0 0 0 4px color-mix(in srgb, var(--tx-3) 12%, transparent); position:relative; z-index:2;
+  display:flex; align-items:center; justify-content:center;}
+#zfr .rmnode.spark {border-color:var(--tx); background:var(--ink); color:var(--on-ink);}
+#zfr .rmnode.spark svg {width:10px; height:10px;}
+#zfr .rmwk {position:absolute; left:32px; top:20px; margin:0; font-size:var(--inds,12.5px); font-weight:500;
+  letter-spacing:-.01em; color:var(--tx-3); white-space:nowrap;}
+#zfr .rmslot {flex:1; min-width:0;}
+#zfr .rmrow .mwk {display:none;}
+#zfr .rmrow.mile {padding-bottom:14px;}
+#zfr body.rmfull .mid {padding:470px 24px 80px;}
+#zfr .rmband {position:fixed; left:0; right:0; top:84px; bottom:auto; z-index:40; padding:0 0 10px;
+  pointer-events:auto;}
+#zfr .rmhead2 {display:flex; align-items:center; gap:12px; padding:0 34px 12px;}
+#zfr .rmhead2 b {font-family:var(--serif); font-size:19px; letter-spacing:-.02em;}
+#zfr .rmpill2 {display:inline-flex; align-items:center; gap:7px; height:30px; padding:0 13px; border-radius:999px;
+  background:var(--ink); color:var(--on-ink); font-size:12px; font-weight:600;}
+#zfr .rmpill2 svg {width:12px; height:12px;}
+#zfr .rmdrag {margin-left:auto; font-size:11.5px; color:var(--tx-4);}
+#zfr .rmpath {position:absolute; left:34px; right:34px; bottom:200px; height:2px; z-index:0;}
+#zfr .rmpath i {display:block; height:100%; border-radius:2px;
+  background:linear-gradient(90deg, rgba(47,156,69,.55), var(--line) 22%, var(--line) 82%, var(--tx-3));}
+#zfr .rmtrack {position:relative; z-index:1; overflow-x:auto; overflow-y:hidden; cursor:grab;
+  padding:0 34px 4px; scrollbar-width:none;}
+#zfr .rmtrack::-webkit-scrollbar {display:none;}
+#zfr .rmtrack.grab {cursor:grabbing;}
+#zfr .rmstart {flex:0 0 auto; display:flex; flex-direction:column; align-items:center; gap:2px; padding:0 10px 42px;}
+#zfr .rmstart b {font-size:12.5px; font-weight:700; letter-spacing:-.02em; white-space:nowrap;}
+#zfr .rmstart span {font-size:11px; color:var(--tx-3);}
+#zfr .rmyou {width:14px; height:14px; border-radius:50%; background:#2f9c45; margin-bottom:8px; position:relative;
+  box-shadow:0 0 0 5px rgba(47,156,69,.16);}
+#zfr .rmyou::after {content:''; position:absolute; inset:-8px; border-radius:50%;
+  border:1.5px solid rgba(47,156,69,.5); animation:pzrip 2.1s ease-out infinite;}
+#zfr .rmstop {flex:0 0 auto; display:flex; flex-direction:column; align-items:center;}
+#zfr .rmnode2 {width:11px; height:11px; border-radius:50%; background:var(--card);
+  border:2px solid var(--tx-4); margin-bottom:14px;}
+#zfr .rmnode2.fin {background:var(--ink); border-color:var(--ink);}
+#zfr .rmcard {position:relative; width:236px; padding:15px 16px 14px; border-radius:20px; text-align:left;
+  background:var(--card); border:1px solid var(--line);
+  box-shadow:0 2px 6px rgba(0,0,0,.04), 0 18px 40px -16px rgba(0,0,0,.18);
+  transition:transform .4s var(--e,cubic-bezier(.625,.05,0,1)), box-shadow .4s ease;}
+#zfr .rmcard:hover {transform:translateY(-3px); box-shadow:0 24px 52px -18px rgba(0,0,0,.24);}
+#zfr .rmcard .rmlg {width:32px; height:32px; border-radius:10px; display:flex; align-items:center;
+  justify-content:center; background:color-mix(in srgb, var(--tx) 6%, transparent); margin-bottom:10px;}
+#zfr .rmcard .rmlg svg {width:18px; height:18px;}
+#zfr .rmcard b {display:block; font-size:14px; font-weight:600; letter-spacing:-.02em;}
+#zfr .rmwk2 {display:block; font-size:11.5px; color:var(--tx-3); margin-top:2px;}
+#zfr .rmprob2 {display:block; font-size:12.5px; line-height:1.45; color:var(--tx-2); margin-top:9px;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;}
+#zfr .rmopen {display:inline-block; margin-top:11px; font-size:11.5px; font-weight:600; color:var(--tx-2);
+  border:1px solid var(--line); border-radius:999px; padding:5px 11px; cursor:pointer;}
+#zfr .rmopen:hover {background:var(--field);}
+#zfr .rmcard.dk {background:var(--ink); color:var(--on-ink); border-color:var(--ink);}
+#zfr .rmcard.dk .rmwk2, #zfr .rmcard.dk .rmprob2 {color:color-mix(in srgb, var(--on-ink) 62%, transparent);}
+#zfr .rmcard.dk .rmlg {background:rgba(255,255,255,.14);}
+#zfr .rmun {position:absolute; top:-11px; right:-6px; width:26px; height:26px; border-radius:50%;
+  background:var(--ink); display:flex; align-items:center; justify-content:center; font-size:12px;
+  box-shadow:0 6px 16px rgba(0,0,0,.24);}
+#zfr .rmun.g {background:linear-gradient(135deg,#18432f,#1d5238);}
+#zfr .rmfloat {position:fixed; bottom:290px; width:440px; z-index:44; cursor:default;
+  box-shadow:0 12px 30px rgba(0,0,0,.12), 0 34px 76px -22px rgba(0,0,0,.3) !important;}
+#zfr .mvlit {box-shadow:0 0 0 2px var(--tx), 0 18px 44px rgba(0,0,0,.14) !important;}

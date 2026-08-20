@@ -1,0 +1,139 @@
+/**
+ * First-run shell — the only styles that are MINE. Everything that paints the
+ * roadmap itself lives in roadmap.css, lifted from the onboarding prototype.
+ *
+ * Scoped to #zfr and to [data-zfr-beat] on <html>, so nothing here can reach
+ * the nav lab's own UI. When the flow finishes it removes its root and deletes
+ * the attribute, leaving his build exactly as it was.
+ */
+#zfr {
+  position: fixed;
+  inset: 0;
+  /* Explicit viewport dimensions, not just `inset: 0`.
+     The nav lab paints inside a transformed wrapper, and a transformed ancestor
+     becomes the containing block for `position: fixed` descendants — so `inset:0`
+     resolved against a zero-sized box and the whole overlay measured 0×0 while
+     still reporting `position: fixed`. Sizing it directly makes the flow
+     independent of wherever in his tree it happens to be appended. */
+  width: 100vw;
+  height: 100vh;
+  z-index: 9000;
+  display: grid;
+  place-items: center;
+  font-family: 'Google Sans Flex', system-ui, sans-serif;
+}
+
+#zfr .zfr-scrim {
+  position: absolute;
+  inset: 0;
+  /* The map stays legible underneath the whole way: this is an arrival INTO
+     the world, so blacking it out would tell the wrong story. Pushed back only
+     far enough for white type to hold contrast. */
+  background: radial-gradient(120% 90% at 50% 45%, rgba(8, 7, 6, 0.74), rgba(8, 7, 6, 0.92));
+  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+#zfr .zfr-stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: min(920px, 92vw);
+  max-height: 88vh;
+}
+
+/* ── Beat 1 ─────────────────────────────────────────────────────────────── */
+#zfr .zfr-welcome { text-align: center; animation: zfrUp 0.62s cubic-bezier(0.16,1,0.3,1) both; }
+#zfr .zfr-eyebrow {
+  font-family: 'Google Sans Code', ui-monospace, monospace;
+  font-size: 13px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: rgba(255,255,255,0.55);
+}
+#zfr h1 {
+  margin: 22px 0 0;
+  font-family: 'Faculty Glyphic', Georgia, serif;
+  font-size: clamp(40px, 5vw, 68px); line-height: 1.05; letter-spacing: -0.02em;
+  color: #fff;
+}
+#zfr .zfr-welcome p {
+  margin: 18px auto 0; max-width: 560px;
+  font-size: 19px; line-height: 1.45; color: rgba(255,255,255,0.72);
+}
+
+#zfr .zfr-cta {
+  margin-top: 34px; border: 0; cursor: pointer;
+  border-radius: 999px; background: #fff; color: #141210;
+  padding: 15px 34px; font-size: 16px; font-weight: 500;
+  font-family: inherit;
+  transition: transform 0.2s ease;
+}
+#zfr .zfr-cta:hover { transform: scale(1.03); }
+#zfr .zfr-cta:active { transform: scale(0.99); }
+
+/* ── Beat 2 ─────────────────────────────────────────────────────────────── */
+#zfr .zfr-journey {
+  display: grid; justify-items: center; width: 100%;
+  animation: zfrUp 0.55s cubic-bezier(0.16,1,0.3,1) both;
+}
+/* The lifted roadmap is authored for a light panel; this is the surface it
+   sits on. Sized so the whole 12 weeks scrolls in one column rather than
+   being paged. */
+#zfr .rmwrap {
+  width: min(760px, 92vw); max-height: 66vh; overflow: auto;
+  background: #f4f2ef; border-radius: 26px; padding: 4px 22px 22px;
+  box-shadow: 0 40px 110px rgba(0,0,0,0.55);
+}
+#zfr .rmwrap::-webkit-scrollbar { width: 0; }
+#zfr .zfr-foot { text-align: center; margin-top: 22px; }
+#zfr .zfr-foot p {
+  margin: 0; font-size: 17px; color: rgba(255,255,255,0.72);
+  text-shadow: 0 1px 14px rgba(0,0,0,0.7);
+}
+
+/* ── Beat 3 · the morph ─────────────────────────────────────────────────── */
+/* The detail dissolves and settles slightly, so the marks read as lifting off
+   a collapsing surface rather than off a static one. */
+#zfr .zfr-stage.zfr-dissolve {
+  opacity: 0;
+  transform: scale(0.965) translateY(10px);
+  transition: opacity 0.32s ease-out, transform 0.5s cubic-bezier(0.16,1,0.3,1);
+  pointer-events: none;
+}
+#zfr[data-beat='morph'] .zfr-scrim,
+#zfr[data-beat='landing'] .zfr-scrim { opacity: 0.28; }
+#zfr[data-beat='settled'] .zfr-scrim { opacity: 0; }
+#zfr[data-beat='morph'],
+#zfr[data-beat='landing'],
+#zfr[data-beat='settled'] { pointer-events: none; }
+
+/* The dock is his and is always there; the flow only holds it back until the
+   marks are on their way, then lets it take over. */
+html[data-zfr-beat='welcome'] nav[aria-label$='timeline'],
+html[data-zfr-beat='journey'] nav[aria-label$='timeline'] { opacity: 0; }
+html[data-zfr-beat] nav[aria-label$='timeline'] {
+  transition: opacity 0.75s cubic-bezier(0.16,1,0.3,1);
+}
+
+@keyframes zfrUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  #zfr *, #zfr { animation: none !important; transition: none !important; }
+}
+
+/**
+ * SVG sizing shims.
+ *
+ * The lifted stylesheet sizes its icons per-component (`.mvsc .mlg svg` 21px,
+ * `.mvsc .mtag svg` 12px) and leans on the prototype's global `svg{display:block}`
+ * for the rest. Two gaps show up once the rules are pulled out of that file:
+ *
+ *  · the global rule is not class-scoped, so the extraction never caught it;
+ *  · `.rmweeks` — the "12 weeks to build" pill in the header — has no svg rule
+ *    of its own. Its sibling `.rmpill2 svg` is 12px, so it inherits that here.
+ *    Without it the clock renders at its intrinsic size and eats the panel.
+ *
+ * The last rule is a backstop, not a style: any icon this flow forgot to size
+ * gets a sane cap instead of a 500px glyph.
+ */
+#zfr svg { display: block; }
+#zfr .rmweeks svg { width: 12px; height: 12px; }
+#zfr .rmwrap svg:not([width]):not([class]) { max-width: 20px; max-height: 20px; }
