@@ -93,6 +93,10 @@
     var out = [];
     rm.categories.forEach(function (cat) {
       cat.scenarios.forEach(function (s) {
+        // Art-first deck: a card without its title art is a lesser object next
+        // to one with it, so the deck shows only the scenarios whose art
+        // exists. The journey count in the header still reads the full 16.
+        if (!s.company || !ART[s.company.name]) return;
         out.push({
           s: s,
           category: cat.title,
@@ -232,7 +236,7 @@
     return d;
   }
 
-  function buildCard(item, index, total, logos, scrollToIndex) {
+  function buildCard(item, index) {
     var s = item.s;
     var active = item.status === 'current';
     var card = styleEl(document.createElement('article'), {
@@ -249,62 +253,16 @@
     });
     card.dataset.nxIdx = index;
 
-    /* ── top: chevrons + counter — the product's own row, driving the deck ── */
-    var top = styleEl(document.createElement('div'), {
-      display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%',
-    });
-    function chev(dir) {
-      var b = styleEl(document.createElement('button'), {
-        display: 'flex', width: '46px', height: '46px', alignItems: 'center',
-        justifyContent: 'center', borderRadius: '999px', border: '0', padding: '0',
-        background: 'transparent', color: C.tx2, cursor: 'pointer',
-        transition: 'background 160ms ease',
-        opacity: (dir < 0 && index === 0) || (dir > 0 && index === total - 1) ? '0.2' : '1',
-        pointerEvents: (dir < 0 && index === 0) || (dir > 0 && index === total - 1) ? 'none' : 'auto',
-      });
-      b.type = 'button';
-      b.setAttribute('aria-label', dir < 0 ? 'Previous scenario' : 'Next scenario');
-      b.innerHTML =
-        '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="' +
-        (dir < 0 ? 'M15 18l-6-6 6-6' : 'M9 18l6-6-6-6') + '"/></svg>';
-      b.addEventListener('mouseenter', function () { b.style.background = 'rgba(13,13,13,0.06)'; });
-      b.addEventListener('mouseleave', function () { b.style.background = 'transparent'; });
-      b.addEventListener('click', function () { scrollToIndex(index + dir); });
-      return b;
-    }
-    var counter = styleEl(document.createElement('div'), {
-      display: 'flex', height: '46px', alignItems: 'center', gap: '10px',
-      borderRadius: '999px', background: C.field, padding: '0 20px',
-    });
-    counter.innerHTML =
-      '<span style="font:400 16px/1 ' + MONO + ';color:' + C.tx + ";font-feature-settings:'lnum' 1,'tnum' 1\">" +
-      String(index + 1).padStart(2, '0') + '</span>' +
-      '<span style="font:400 16px/1 ' + MONO + ';color:' + C.tx4 + '">/</span>' +
-      '<span style="font:400 16px/1 ' + MONO + ';color:' + C.tx3 + ";font-feature-settings:'lnum' 1,'tnum' 1\">" +
-      String(total).padStart(2, '0') + '</span>';
-    top.appendChild(chev(-1));
-    top.appendChild(counter);
-    top.appendChild(chev(1));
-    card.appendChild(top);
-
-    /* ── middle: company pill · key art with halo · scenario name ────────── */
+    /* ── middle: key art with halo · scenario name ────────────────────────
+       No chevron row and no company pill: the title art carries the brand
+       badge inside itself, and the deck is navigated by scroll and the pips.
+       What was chrome becomes air. */
     var mid = styleEl(document.createElement('div'), {
       display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '18px',
       flex: '1 1 auto', justifyContent: 'center', minHeight: '0', width: '100%',
     });
 
     var companyName = s.company ? s.company.name : '';
-    var pill = styleEl(document.createElement('div'), {
-      display: 'flex', alignItems: 'center', gap: '8px', flexShrink: '0',
-      padding: '7px 16px 7px 9px', borderRadius: '999px',
-      background: '#FFFFFF', border: '1px solid ' + C.line,
-      boxShadow: '0 4px 14px -8px rgba(13,13,13,0.18)',
-    });
-    var logo = logos[companyName];
-    pill.innerHTML =
-      (logo ? '<img src="' + logo + '" alt="" style="width:18px;height:18px;object-fit:contain" aria-hidden="true"/>' : '') +
-      '<span style="font:600 14px/1 ' + SANS + ';color:' + C.tx + '">' + companyName + '</span>';
-    mid.appendChild(pill);
 
     var art = ART[companyName];
     var artBox = styleEl(document.createElement('div'), {
@@ -385,6 +343,12 @@
         'backdrop-filter:none !important;-webkit-backdrop-filter:none !important}',
       'html[data-nx-home="cards"] button[aria-label="Settings"] svg path,' +
         'html[data-nx-home="cards"] #nx-portfolio-dock button svg path{fill:' + C.tx + ' !important}',
+      // the glass lives on an INNER div of these pills, not the labelled
+      // wrapper — reach one level in, kill the dark fill and the blur
+      'html[data-nx-home="cards"] [aria-label^="Level "] [class*="bg-[rgba(0,0,0"],' +
+        'html[data-nx-home="cards"] [aria-label*="day streak"] [class*="bg-[rgba(0,0,0"]{' +
+        'background:transparent !important;backdrop-filter:none !important;' +
+        '-webkit-backdrop-filter:none !important;border-color:' + C.line + ' !important}',
       'html[data-nx-home="cards"] [aria-label^="Level "] *,' +
         'html[data-nx-home="cards"] [aria-label*="day streak"] *{color:' + C.tx + ' !important}',
       // the portfolio ring's empty track needs to be visible on paper
@@ -412,6 +376,12 @@
     var items = deck();
     if (!items.length) return;
     var doneN = window.__NX_ROADMAP.completedCount;
+    var currentIdx = items.findIndex(function (it) { return it.status === 'current'; });
+    if (currentIdx < 0) currentIdx = 0;
+    // the journey is still sixteen scenarios — only the DECK is art-filtered
+    var totalJourney = window.__NX_ROADMAP.categories.reduce(function (n, c) {
+      return n + c.scenarios.length;
+    }, 0);
 
     var layer = styleEl(document.createElement('div'), {
       position: 'absolute', inset: '0', zIndex: '15',
@@ -439,7 +409,7 @@
     head.innerHTML +=
       '<span style="font:500 12px/1 ' + MONO + ';letter-spacing:.12em;text-transform:uppercase;color:' +
       C.tx3 + ";font-feature-settings:'lnum' 1,'tnum' 1\">Your journey · " +
-      String(doneN + 1).padStart(2, '0') + ' / ' + String(items.length).padStart(2, '0') + '</span>' +
+      String(doneN + 1).padStart(2, '0') + ' / ' + String(totalJourney).padStart(2, '0') + '</span>' +
       '<h1 style="font:400 34px/1 ' + SERIF + ';letter-spacing:-.02em;color:' + C.tx + ';margin:0">' +
       window.__NX_ROADMAP.journeyTitle + '</h1>';
     layer.appendChild(head);
@@ -454,7 +424,7 @@
       if (el) el.scrollIntoView({ behavior: REDUCE ? 'auto' : 'smooth', inline: 'center', block: 'nearest' });
     }
     items.forEach(function (item, i) {
-      scroller.appendChild(buildCard(item, i, items.length, logos, scrollToIndex));
+      scroller.appendChild(buildCard(item, i));
     });
     layer.appendChild(scroller);
 
@@ -466,9 +436,9 @@
     });
     var pips = items.map(function (item, i) {
       var d = styleEl(document.createElement('button'), {
-        width: i === doneN ? '28px' : '7px', height: '7px', borderRadius: '999px', border: '0',
+        width: i === currentIdx ? '28px' : '7px', height: '7px', borderRadius: '999px', border: '0',
         padding: '0', cursor: 'pointer',
-        background: i <= doneN ? C.tx : C.tx4,
+        background: item.status === 'completed' || item.status === 'current' ? C.tx : C.tx4,
         transition: 'width 260ms cubic-bezier(.22,.61,.36,1), background 260ms ease',
       });
       d.type = 'button';
@@ -507,9 +477,9 @@
 
     // open on the scenario you are actually on
     requestAnimationFrame(function () {
-      var el = scroller.children[doneN];
+      var el = scroller.children[currentIdx];
       if (el) scroller.scrollLeft = el.offsetLeft + el.offsetWidth / 2 - scroller.clientWidth / 2;
-      setCentred(doneN);
+      setCentred(currentIdx);
     });
   }
 
