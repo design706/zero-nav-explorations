@@ -285,6 +285,39 @@ const RULES = [
     /completedCount:5,categories:\[/,
     'completedCount:(typeof window<"u"&&window.__NX_DOCK&&window.__NX_DOCK.DONE)||5,categories:[',
   ],
+  /* Expose the map's own camera helpers.
+
+     The rail derives "current" from completedCount, but the camera targets
+     `user.currentScenario` — a value the lab's fixture seeds independently. So
+     winding the clock back moved the rail to Slack while the camera stayed
+     framing the previous scenario's neighbourhood, which is why the card and
+     the building ended up on opposite sides of the screen.
+
+     Rather than rewrite the fixture's scenario wiring, this hands the
+     injection the same two functions the rail's own hover uses, so the view
+     can be told to follow the rail. Assignment only — nothing renders
+     differently when the variant is off. */
+  [
+    'exposeCamera',
+    // at MODULE scope (before releaseCamera), not inside flyToCompany — the
+    // latter only runs on hover, long after the injection needs it.
+    /function releaseCamera\(\)\{setMapCamera\(null\)\}/,
+    'typeof window<"u"&&(window.__NX_FLY=flyToCompany,window.__NX_PLACE=companyPlace,' +
+      'window.__NX_CAM=setMapCamera);function releaseCamera(){setMapCamera(null)}',
+  ],
+  /* The fixture's current scenario, tied to the same clock.
+
+     The lab seeds `CURRENT_SEQUENCE=6` while the roadmap carries
+     `completedCount:5` — one invariant expressed as two literals:
+     CURRENT_SEQUENCE === completedCount + 1. Winding one back without the
+     other is what put the card on Slack while the pin and the camera stayed on
+     the old scenario's building, which is the "map is not on Slack" bug.
+     Deriving it removes the chance of them drifting again. */
+  [
+    'currentSequence',
+    /CURRENT_SEQUENCE=6/,
+    'CURRENT_SEQUENCE=((typeof window<"u"&&window.__NX_DOCK&&window.__NX_DOCK.DONE)||5)+1',
+  ],
 ];
 
 let out = src;

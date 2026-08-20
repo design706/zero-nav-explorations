@@ -278,9 +278,43 @@
     window.addEventListener('resize', run);
   }
 
+  /* ── keep the map on the scenario the rail is pointing at ────────────────
+     The rail derives "current" from the journey's completedCount, but the
+     camera targets `user.currentScenario`, which the lab's fixture seeds
+     separately. Wind the clock back and the two disagree: the card names one
+     company while the view frames another's neighbourhood, so the pin sits far
+     off at the edge of the screen with a long leader line to the card.
+
+     The company is read from the rail itself — the current chip's own
+     aria-label ("Title, Company") — so the view follows whatever the rail
+     says is current and the two cannot drift apart again. */
+  function currentCompanyFromRail() {
+    var pill = document.querySelector('nav[aria-label$="timeline"] > div');
+    if (!pill) return null;
+    var chips = pill.querySelectorAll(':scope > div > button[aria-label]');
+    for (var i = 0; i < chips.length; i++) {
+      var b = chips[i];
+      if (b.hasAttribute('aria-expanded')) continue;
+      // the current scenario is the one wearing the green ring
+      if (!/73,\s*186,\s*97/.test(getComputedStyle(b).boxShadow)) continue;
+      var label = b.getAttribute('aria-label') || '';
+      var at = label.lastIndexOf(', ');
+      if (at > 0) return label.slice(at + 2);
+    }
+    return null;
+  }
+
+  function frameCurrentScenario() {
+    var company = currentCompanyFromRail();
+    if (!company || !window.__NX_FLY) return false;
+    return window.__NX_FLY(company);
+  }
+
   function initDock() {
     var pill = document.querySelector('nav[aria-label$="timeline"]').firstElementChild;
     scheduleFits(pill);
+    // after the map's own intro settles, put the view on the current scenario
+    setTimeout(frameCurrentScenario, 1200);
     document.documentElement.style.setProperty('--nx-conn-focus', '12px');
     document.documentElement.style.setProperty('--nx-seg-pad-focus', '8px');
     document.documentElement.style.setProperty('--nx-seg-gap-focus', '5px');
